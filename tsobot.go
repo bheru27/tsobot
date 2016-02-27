@@ -1,14 +1,17 @@
 package main
 
 import (
-	"github.com/sorcix/irc"
 	"log"
 	"os"
 	"os/signal"
+	"regexp"
 	"time"
+
+	"github.com/sorcix/irc"
 )
 
 func main() {
+	cmdRegexp := regexp.MustCompile(`:(\w+):`)
 	c, err := irc.Dial("irc.rizon.net:6667")
 	defer c.Close()
 	if err != nil {
@@ -42,10 +45,10 @@ func main() {
 		Params:   []string{"tsobot", "0", "*"},
 		Trailing: "tsobot",
 	})
-    <-time.After(time.Second)
+	<-time.After(time.Second)
 	c.Encode(&irc.Message{
 		Command: irc.JOIN,
-		Params:  []string{"#/g/punk"},
+		Params:  []string{"#tso"},
 	})
 	for {
 		select {
@@ -62,17 +65,29 @@ func main() {
 				log.Printf("%#v\n", msg)
 				c.Encode(&irc.Message{
 					Command:  irc.PRIVMSG,
-					Params:   []string{"#/g/punk"},
+					Params:   []string{"#tso"},
 					Trailing: "Repor—",
 				})
-				c.Encode(&irc.Message{
-					Command: irc.QUIT,
-				})
-				c.Close()
-				return
+				//				c.Encode(&irc.Message{
+				//					Command: irc.QUIT,
+				//				})
+				//				c.Close()
+				//				return
 			}
-		case <-time.After(time.Second * 120):
-			log.Fatalln("Timed out.")
+			if msg.Command == irc.PRIVMSG {
+				if cmdRegexp.MatchString(msg.Trailing) {
+					m := cmdRegexp.FindStringSubmatch(msg.Trailing)
+					if e, ok := emoji[m[1]]; ok {
+						c.Encode(&irc.Message{
+							Command:  irc.PRIVMSG,
+							Params:   []string{"#tso"},
+							Trailing: e,
+						})
+					}
+				}
+			}
+			//		case <-time.After(time.Second * 120):
+			//			log.Fatalln("Timed out.")
 		}
 	}
 }
