@@ -1,93 +1,73 @@
 package main
 
 import (
+	"crypto/tls"
+	"flag"
 	"log"
 	"os"
 	"os/signal"
 	"regexp"
-	"time"
 
-	"github.com/sorcix/irc"
+	"github.com/fluffle/goirc/client"
 )
 
+var host string
+var nick string
+var ch string
+
 func main() {
-	cmdRegexp := regexp.MustCompile(`:(\w+):`)
-	c, err := irc.Dial("irc.rizon.net:6667")
-	defer c.Close()
-	if err != nil {
-		log.Fatalln(err)
-	}
+	flag.StringVar(&host, "host", "irc.rizon.net", "host")
+	flag.StringVar(&nick, "nick", "tsobot", "nick")
+	flag.StringVar(&ch, "chan", "#tso", "chan")
+
+	flag.Parse()
+
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
-	go func() {
-		<-sig
-		log.Println("we get signal")
-		c.Close()
-		os.Exit(0)
-	}()
 
-	messages := make(chan *irc.Message)
-	go func() {
-		for {
-			msg, err := c.Decode()
-			if err != nil {
-				log.Fatalln(err)
-			}
-			messages <- msg
+	//irc := client.SimpleClient(nick)
+	cfg := client.NewConfig(nick)
+	cfg.SSL = true
+	cfg.SSLConfig = &tls.Config{ServerName: host}
+	cfg.Server = host + ":6697"
+	cfg.NewNick = func(n string) string { return n + "^" }
+	irc := client.Client(cfg)
+
+	ded := make(chan struct{})
+	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
+		irc.Join(ch)
+	})
+	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
+		close(ded)
+	})
+	cmdRegexp := regexp.MustCompile(`:(\w+):`)
+
+	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
+		//log.Printf("%#v\n", l)
+		who, msg := l.Args[0], l.Args[1]
+		if msg == ".bots" {
+			irc.Privmsg(who, "Reporting in! [Go]")
+			return
 		}
-	}()
-	c.Encode(&irc.Message{
-		Command: irc.NICK,
-		Params:  []string{"tsobot"},
-	})
-	c.Encode(&irc.Message{
-		Command:  irc.USER,
-		Params:   []string{"tsobot", "0", "*"},
-		Trailing: "tsobot",
-	})
-	<-time.After(time.Second)
-	c.Encode(&irc.Message{
-		Command: irc.JOIN,
-		Params:  []string{"#tso"},
-	})
-	for {
-		select {
-		case msg := <-messages:
-			log.Println(msg.String())
-			if msg.Command == irc.PING {
-				c.Encode(&irc.Message{
-					Command:  irc.PONG,
-					Params:   msg.Params,
-					Trailing: msg.Trailing,
-				})
+		if cmdRegexp.MatchString(msg) {
+			m := cmdRegexp.FindStringSubmatch(msg)
+			if e, ok := emoji[m[1]]; ok {
+				irc.Privmsg(who, e)
 			}
-			if msg.Command == irc.PRIVMSG && msg.Trailing == ".bots" {
-				log.Printf("%#v\n", msg)
-				c.Encode(&irc.Message{
-					Command:  irc.PRIVMSG,
-					Params:   []string{"#tso"},
-					Trailing: "Repor—",
-				})
-				//				c.Encode(&irc.Message{
-				//					Command: irc.QUIT,
-				//				})
-				//				c.Close()
-				//				return
-			}
-			if msg.Command == irc.PRIVMSG {
-				if cmdRegexp.MatchString(msg.Trailing) {
-					m := cmdRegexp.FindStringSubmatch(msg.Trailing)
-					if e, ok := emoji[m[1]]; ok {
-						c.Encode(&irc.Message{
-							Command:  irc.PRIVMSG,
-							Params:   []string{"#tso"},
-							Trailing: e,
-						})
-					}
-				}
-			}
-			//		case <-time.After(time.Second * 120):
-			//			log.Fatalln("Timed out.")
 		}
+	})
+
+	if err := irc.ConnectTo(host); err != nil {
+		log.Fatalln("Connection error:", err)
+	}
+
+	select {
+	case <-sig:
+		log.Println("we get signal")
+		irc.Quit("we get signal")
+		os.Exit(0)
+	case <-ded:
+		log.Println("disconnected.")
+		os.Exit(1)
 	}
 }
