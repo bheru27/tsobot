@@ -54,8 +54,7 @@ func main() {
 			m := cmdRegexp.FindStringSubmatch(msg)
 			if e, ok := emoji[m[1]]; ok {
 				irc.Privmsg(who, e)
-			}
-			if o, ok := other[m[1]]; ok {
+			} else if o, ok := other[m[1]]; ok {
 				irc.Privmsg(who, o[rand.Intn(len(o))])
 			}
 		}
