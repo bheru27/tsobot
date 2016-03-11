@@ -69,7 +69,11 @@ func tonePolice(txt []byte) []string {
 					emot = append(emot, fmt.Sprintf("%s %.0f%%", t.Name, t.Score*100.0))
 				}
 			}
-			line += strings.Join(emot, ", ")
+			out := strings.Join(emot, ", ")
+			if out == "" {
+				out = "(empty)"
+			}
+			line += out
 			lines = append(lines, line)
 		}
 	}
