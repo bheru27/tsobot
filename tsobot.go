@@ -141,7 +141,7 @@ func main() {
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
 		close(ded)
 	})
-	cmdRegexp := regexp.MustCompile(`:(.+):`)
+	cmdRegexp := regexp.MustCompile(`:(.+?):`)
 
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		log.Printf("%#v\n", l)
@@ -158,14 +158,22 @@ func main() {
 			return
 		}
 		if cmdRegexp.MatchString(msg) {
-			m := cmdRegexp.FindStringSubmatch(msg)
-			if e, ok := emoji[m[1]]; ok {
-				irc.Privmsg(who, e)
-			} else if o, ok := other[m[1]]; ok {
-				irc.Privmsg(who, o[rand.Intn(len(o))])
-			} else {
-				irc.Privmsg(who, "(404 emoji not found)")
+			matches := cmdRegexp.FindAllStringSubmatch(msg, -1)
+			if len(matches) == 0 {
+				return
 			}
+			for _, m := range matches {
+				var new string
+				if e, ok := emoji[m[1]]; ok {
+					new = e
+				} else if o, ok := other[m[1]]; ok {
+					new = o[rand.Intn(len(o))]
+				} else {
+					new = "?"
+				}
+				msg = strings.Replace(msg, m[0], new, 1)
+			}
+			irc.Privmsg(who, msg)
 			return
 		}
 		if strings.Index(msg, ".tone_police") == 0 {
