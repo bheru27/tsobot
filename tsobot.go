@@ -140,13 +140,13 @@ func main() {
 	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
 		//		irc.Join(ch)
 		irc.Join("#tso")
-		//irc.Join("#/g/punk")
+		irc.Join("#/g/punk")
 		//irc.Join("#code")
 	})
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
 		close(ded)
 	})
-	cmdRegexp := regexp.MustCompile(`:(.+?):`)
+	cmdRegexp := regexp.MustCompile(`:([^\s]+?):`)
 
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		log.Printf("%#v\n", l)
@@ -176,7 +176,7 @@ func main() {
 				} else if j, ok := jmote[m[1]]; ok {
 					new = j[rand.Intn(len(j))]
 				} else {
-					new = "?"
+					return
 				}
 				msg = strings.Replace(msg, m[0], new, 1)
 			}
