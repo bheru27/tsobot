@@ -173,6 +173,8 @@ func main() {
 					new = e
 				} else if o, ok := other[m[1]]; ok {
 					new = o[rand.Intn(len(o))]
+				} else if j, ok := jmote[m[1]]; ok {
+					new = j[rand.Intn(len(j))]
 				} else {
 					new = "?"
 				}

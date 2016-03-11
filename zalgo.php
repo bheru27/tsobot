@@ -45,3 +45,13 @@ foreach($other as $word => $emojis) {
 }
 ?>
 }
+
+var jmote map[string][]string = map[string][]string{
+<?php
+$d = dir('emot');
+while(($f = $d->read())!==false) {
+    if(is_dir($f) || !preg_match('/^(\w+)\.txt$/', $f, $m)) continue;
+    echo '"', sanitize($m[1]), '": []string{"', implode('","', array_map('trim', file("emot/$f"))), '"},', "\n";
+}
+?>
+}
