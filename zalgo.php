@@ -6,6 +6,7 @@ $other = [];
 $emoji = file_get_contents('full-emoji-list.html');
 preg_match_all("/<tr>(.*?)<\/tr>/mis", $emoji, $m, PREG_SET_ORDER);
 array_shift($m);
+$names = [];
 foreach($m as $sample) {
     if(!preg_match("/<td class='chars'>(.*)<\/td>/", $sample[1], $u)) continue;
     $unicode = $u[1];
@@ -17,13 +18,19 @@ foreach($m as $sample) {
         }
     }
     foreach(explode("<br>≊", $n[1][0]) as $name) {
-        println($unicode, trim($name));
+        $name = sanitize($name);
+        if(strstr($name, '_type_') || in_array($name, $names)) continue;
+        println($unicode, $name);
+        $names[] = $name;
     }
-//    echo $unicode, ' ', strtolower($name), ' ', implode(' ', $words), "\n";
 }
 
 function println($unicode, $name) {
-    echo '"', str_replace(' ', '_', strtolower($name)), '": "', $unicode, '",', "\n";
+    echo '"', $name, '": "', $unicode, '",', "\n";
+}
+
+function sanitize($name) {
+    return preg_replace('/[^\w\+]+/', '_', trim(strtolower($name)));
 }
 ?>
 }
@@ -31,7 +38,7 @@ function println($unicode, $name) {
 var other map[string][]string = map[string][]string{
 <?php
 foreach($other as $word => $emojis) {
-    echo '"', str_replace(' ', '_', strtolower($word)), '": []string{', 
+    echo '"', sanitize($word), '": []string{', 
         '"',
         implode('","', $emojis),
         '"},', "\n";

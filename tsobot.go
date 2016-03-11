@@ -141,7 +141,7 @@ func main() {
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
 		close(ded)
 	})
-	cmdRegexp := regexp.MustCompile(`:(\w+):`)
+	cmdRegexp := regexp.MustCompile(`:(.+):`)
 
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		log.Printf("%#v\n", l)
