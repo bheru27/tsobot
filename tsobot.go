@@ -43,6 +43,7 @@ func tonePolice(txt []byte) []string {
 	checkErr(err)
 	req.SetBasicAuth(u, p)
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Watson-Learning-Opt-Out", "1")
 
 	client := &http.Client{}
 	res, err := client.Do(req)
