@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/fluffle/goirc/client"
+	"github.com/fluffle/goirc/logging"
 )
 
 var host string
@@ -23,6 +24,13 @@ var nick string
 var ch string
 var u string
 var p string
+
+type tsoLogger struct{}
+
+func (l *tsoLogger) Debug(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
+func (l *tsoLogger) Info(f string, a ...interface{})  { log.Printf(f+"\n", a...) }
+func (l *tsoLogger) Warn(f string, a ...interface{})  { log.Printf(f+"\n", a...) }
+func (l *tsoLogger) Error(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
 
 func checkErr(err error) {
 	if err != nil {
@@ -112,6 +120,9 @@ func main() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
 
+	l := &tsoLogger{}
+	logging.SetLogger(l)
+
 	//irc := client.SimpleClient(nick)
 	cfg := client.NewConfig(nick)
 	cfg.SSL = true
@@ -124,8 +135,8 @@ func main() {
 	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
 		//		irc.Join(ch)
 		irc.Join("#tso")
-		irc.Join("#/g/punk")
-		irc.Join("#code")
+		//irc.Join("#/g/punk")
+		//irc.Join("#code")
 	})
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
 		close(ded)
@@ -133,10 +144,17 @@ func main() {
 	cmdRegexp := regexp.MustCompile(`:(\w+):`)
 
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
-		//log.Printf("%#v\n", l)
+		log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
+		if who == nick {
+			who = l.Nick
+		}
 		if msg == ".bots" {
-			irc.Privmsg(who, "Reporting in! [Go]")
+			irc.Privmsg(who, "Reporting in! [Go] [github.com/generaltso/tsobot]")
+			return
+		}
+		if msg == ".test" {
+			irc.Who(who)
 			return
 		}
 		if cmdRegexp.MatchString(msg) {
@@ -153,10 +171,12 @@ func main() {
 		if strings.Index(msg, ".tone_police") == 0 {
 			if msg == ".tone_police" {
 				irc.Privmsg(who, "(feed me data)")
+				return
 			}
 			text := strings.Replace(msg, ".tone_police", "", -1)
 			lines := tonePolice([]byte(`{"text":"` + text + `"}`))
 			irc.Privmsg(who, strings.Join(lines, " | "))
+			return
 		}
 	})
 
