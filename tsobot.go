@@ -14,9 +14,11 @@ import (
 	"os/signal"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
+	rss "github.com/jteeuwen/go-pkg-rss"
 )
 
 var host string
@@ -140,13 +142,23 @@ func main() {
 	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
 		//		irc.Join(ch)
 		irc.Join("#tso")
-		irc.Join("#/g/punk")
+		//irc.Join("#/g/punk")
 		//irc.Join("#code")
 	})
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
 		close(ded)
 	})
 	cmdRegexp := regexp.MustCompile(`:([^\s]+?):`)
+
+	feed := rss.New(5, false, func(f *rss.Feed, newchannels []*rss.Channel) {
+	}, func(f *rss.Feed, channel *rss.Channel, items []*rss.Item) {
+		for i, item := range items {
+			if len(item.Links) > 0 {
+				<-time.After(time.Second * 3)
+				irc.Privmsg(ch, fmt.Sprintf("[%d] %s : %s", i, item.Links[0].Href, item.Title))
+			}
+		}
+	})
 
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		log.Printf("%#v\n", l)
@@ -192,6 +204,17 @@ func main() {
 			lines := tonePolice([]byte(`{"text":"` + text + `"}`))
 			irc.Privmsg(who, strings.Join(lines, " | "))
 			return
+		}
+		if l.Nick == "tso" && strings.Index(msg, ".rss") == 0 {
+			if msg == ".rss" {
+				irc.Privmsg(who, "(enter rss url pls)")
+				return
+			}
+			badidea := strings.Replace(msg, ".rss ", "", -1)
+			err := feed.Fetch(badidea, nil)
+			if err != nil {
+				irc.Privmsg(who, err.Error())
+			}
 		}
 	})
 
