@@ -1,3 +1,5 @@
 tsobot
 client.Line.txt
 watson/*
+*.exe
+*.sw*

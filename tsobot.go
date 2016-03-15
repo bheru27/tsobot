@@ -11,6 +11,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/signal"
 	"regexp"
 	"strings"
@@ -115,6 +116,19 @@ func parseJson(b []byte) (results []*Category) {
 	return results
 }
 
+var escapeshellstringre *regexp.Regexp = regexp.MustCompile(`([\(\)\[\]\{\}\$\#&;` + "`" + `\|\*\?~<>\^'"\s])`)
+
+func EscapeShellString(str string) string {
+	return escapeshellstringre.ReplaceAllString(str, "\\$1")
+}
+
+func translate(text string) string {
+	cmd := exec.Command("sh", "-c", "trans -brief "+EscapeShellString(text))
+	b, err := cmd.Output()
+	checkErr(err)
+	return string(b)
+}
+
 func main() {
 	flag.StringVar(&host, "host", "irc.rizon.net", "host")
 	flag.StringVar(&nick, "nick", "tsobot", "nick")
@@ -142,7 +156,7 @@ func main() {
 	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
 		//		irc.Join(ch)
 		irc.Join("#tso")
-		//irc.Join("#/g/punk")
+		irc.Join("#/g/punk")
 		//irc.Join("#code")
 	})
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
@@ -215,6 +229,11 @@ func main() {
 			if err != nil {
 				irc.Privmsg(who, err.Error())
 			}
+			return
+		}
+		if strings.Index(msg, ".trans") == 0 {
+			text := strings.Replace(msg, ".trans ", "", -1)
+			irc.Privmsg(who, translate(text))
 		}
 	})
 
