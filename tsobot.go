@@ -8,13 +8,10 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
-	"regexp"
 	"strings"
-	"time"
 
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
-	rss "github.com/jteeuwen/go-pkg-rss"
 )
 
 var host string
@@ -38,10 +35,13 @@ func checkErr(err error) {
 	}
 }
 
+var sendMessage func(who, msg string)
+
 func main() {
 	flag.StringVar(&host, "host", "irc.rizon.net", "host")
 	flag.IntVar(&port, "port", 6697, "port")
 	flag.BoolVar(&ssl, "ssl", true, "use ssl?")
+
 	flag.StringVar(&nick, "nick", "tsobot", "nick")
 	flag.StringVar(&join, "join", "tso", "join these channels (space separated list)")
 
@@ -66,26 +66,20 @@ func main() {
 	cfg.Server = fmt.Sprintf("%s:%d", host, port)
 	irc := client.Client(cfg)
 
-	ded := make(chan struct{})
 	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
 		for _, ch := range strings.Split(join, " ") {
 			irc.Join("#" + ch)
 		}
 	})
+
+	ded := make(chan struct{})
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
 		close(ded)
 	})
-	cmdRegexp := regexp.MustCompile(`:([^\s]+?):`)
 
-	feed := rss.New(5, false, func(f *rss.Feed, newchannels []*rss.Channel) {
-	}, func(f *rss.Feed, channel *rss.Channel, items []*rss.Item) {
-		for i, item := range items {
-			if len(item.Links) > 0 {
-				<-time.After(time.Second * 3)
-				irc.Privmsg("tso", fmt.Sprintf("[%d] %s : %s", i, item.Links[0].Href, item.Title))
-			}
-		}
-	})
+	sendMessage = func(who, msg string) {
+		irc.Privmsg(who, msg)
+	}
 
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		//log.Printf("%#v\n", l)

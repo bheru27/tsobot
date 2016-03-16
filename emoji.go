@@ -1,5 +1,9 @@
 package main
 
+import "regexp"
+
+var cmdRegexp *regexp.Regexp = regexp.MustCompile(`:([^\s]+?):`)
+
 var emoji map[string]string = map[string]string{
 	"grinning_face":                                        "😀",
 	"grinning_face_with_smiling_eyes":                      "😁",
