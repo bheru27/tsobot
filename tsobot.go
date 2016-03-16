@@ -23,8 +23,10 @@ import (
 )
 
 var host string
+var port int
+var ssl bool
 var nick string
-var ch string
+var join string
 var u string
 var p string
 
@@ -131,8 +133,11 @@ func translate(text string) string {
 
 func main() {
 	flag.StringVar(&host, "host", "irc.rizon.net", "host")
+	flag.IntVar(&port, "port", 6697, "port")
+	flag.BoolVar(&ssl, "ssl", true, "use ssl?")
 	flag.StringVar(&nick, "nick", "tsobot", "nick")
-	flag.StringVar(&ch, "chan", "#tso", "chan")
+	flag.StringVar(&join, "join", "tso", "join these channels (space separated list)")
+
 	flag.StringVar(&u, "wuname", "", "watson username")
 	flag.StringVar(&p, "wpword", "", "watson password")
 
@@ -146,18 +151,19 @@ func main() {
 
 	//irc := client.SimpleClient(nick)
 	cfg := client.NewConfig(nick)
-	cfg.SSL = true
-	cfg.SSLConfig = &tls.Config{ServerName: host}
-	cfg.Server = host + ":6697"
-	cfg.NewNick = func(n string) string { return n + "^" }
+	if ssl {
+		cfg.SSL = true
+		cfg.SSLConfig = &tls.Config{ServerName: host}
+		cfg.NewNick = func(n string) string { return n + "^" }
+	}
+	cfg.Server = fmt.Sprintf("%s:%d", host, port)
 	irc := client.Client(cfg)
 
 	ded := make(chan struct{})
 	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
-		//		irc.Join(ch)
-		irc.Join("#tso")
-		irc.Join("#/g/punk")
-		//irc.Join("#code")
+		for _, ch := range strings.Split(join, " ") {
+			irc.Join("#" + ch)
+		}
 	})
 	irc.HandleFunc(client.DISCONNECTED, func(c *client.Conn, l *client.Line) {
 		close(ded)
@@ -169,19 +175,19 @@ func main() {
 		for i, item := range items {
 			if len(item.Links) > 0 {
 				<-time.After(time.Second * 3)
-				irc.Privmsg(ch, fmt.Sprintf("[%d] %s : %s", i, item.Links[0].Href, item.Title))
+				irc.Privmsg("tso", fmt.Sprintf("[%d] %s : %s", i, item.Links[0].Href, item.Title))
 			}
 		}
 	})
 
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
-		log.Printf("%#v\n", l)
+		//log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
 		if who == nick {
 			who = l.Nick
 		}
-		if msg == ".bots" {
-			irc.Privmsg(who, "Reporting in! [Go] [github.com/generaltso/tsobot]")
+		if msg == ".bots" || msg == "who is tsobot" {
+			irc.Privmsg(who, "Reporting in! \x0310go\x0f get github.com/generaltso/tsobot")
 			return
 		}
 		if msg == ".test" {
