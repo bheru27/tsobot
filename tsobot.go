@@ -18,6 +18,7 @@ var host string
 var port int
 var ssl bool
 var nick string
+var pass string
 var join string
 var u string
 var p string
@@ -43,6 +44,7 @@ func main() {
 	flag.BoolVar(&ssl, "ssl", true, "use ssl?")
 
 	flag.StringVar(&nick, "nick", "tsobot", "nick")
+	flag.StringVar(&pass, "pass", "", "NickServ IDENTIFY password (optional)")
 	flag.StringVar(&join, "join", "tso", "join these channels (space separated list)")
 
 	flag.StringVar(&u, "wuname", "", "watson username")
@@ -67,6 +69,9 @@ func main() {
 	irc := client.Client(cfg)
 
 	irc.HandleFunc(client.CONNECTED, func(c *client.Conn, l *client.Line) {
+		if pass != "" {
+			irc.Privmsg("NickServ", "IDENTIFY "+pass)
+		}
 		for _, ch := range strings.Split(join, " ") {
 			irc.Join("#" + ch)
 		}
