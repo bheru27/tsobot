@@ -5,9 +5,11 @@ import (
 	"regexp"
 )
 
-var escapeshellstringre *regexp.Regexp = regexp.MustCompile(`([\(\)\[\]\{\}\$\#&;` + "`" + `\|\*\?~<>\^'"\s])`)
+var escapeshellstringre *regexp.Regexp = regexp.MustCompile(`([/\(\)\[\]\{\}\$\#&;` + "`" + `\|\*\?~<>\^'"\s-])`)
+var removeflagsre *regexp.Regexp = regexp.MustCompile(`-+\w*`)
 
 func EscapeShellString(str string) string {
+	str = removeflagsre.ReplaceAllString(str, "")
 	return escapeshellstringre.ReplaceAllString(str, "\\$1")
 }
 

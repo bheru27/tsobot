@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
@@ -54,6 +55,7 @@ func main() {
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
+	signal.Notify(sig, os.Kill)
 
 	l := &tsoLogger{}
 	logging.SetLogger(l)
@@ -96,8 +98,8 @@ func main() {
 			irc.Privmsg(who, "Reporting in! \x0310go\x0f get github.com/generaltso/tsobot")
 			return
 		}
-		if msg == ".test" {
-			irc.Who(who)
+		if l.Nick == "tso" && msg == ".test" {
+			irc.Quit("\"take off every `zig`\"")
 			return
 		}
 		if cmdRegexp.MatchString(msg) {
@@ -145,6 +147,7 @@ func main() {
 		}
 		if strings.Index(msg, ".trans") == 0 {
 			text := strings.Replace(msg, ".trans ", "", -1)
+			text = strings.Replace(text, "/", "", -1)
 			irc.Privmsg(who, translate(text))
 		}
 	})
@@ -156,7 +159,11 @@ func main() {
 	select {
 	case <-sig:
 		log.Println("we get signal")
-		irc.Quit("we get signal")
+		for _, ch := range strings.Split(join, " ") {
+			irc.Part("#"+ch, "we get signal")
+		}
+		<-time.After(time.Second)
+		irc.Quit()
 		os.Exit(0)
 	case <-ded:
 		log.Println("disconnected.")
