@@ -73,7 +73,7 @@ func parseMessage(who, msg, nick string) {
 
 func isAdmin(nick string) bool {
 	ind := sort.SearchStrings(botAdmins, nick)
-	retval := ind < len(botAdmins) && botAdmins[ind] == nick
+	retval := botAdmins[ind] == nick
 	if !retval {
 		log.Printf("%#v\n", botAdmins)
 		sendMessage(nick, "Access denied.")
@@ -84,15 +84,13 @@ func isAdmin(nick string) bool {
 func addAdmin(nick string) {
 	botAdmins = append(botAdmins, nick)
 	botAdmins = sort.StringSlice(botAdmins)
-	sort.Sort(sort.Reverse(botAdmins))
 }
 
 func removeAdmin(nick string) {
 	ind := sort.SearchStrings(botAdmins, nick)
-	if ind < len(botAdmins) && botAdmins[ind] == nick {
+	if botAdmins[ind] == nick {
 		botAdmins = append(botAdmins[:ind], botAdmins[ind+1:]...)
 		botAdmins = sort.StringSlice(botAdmins)
-		sort.Sort(sort.Reverse(botAdmins))
 	}
 }
 
@@ -135,7 +133,6 @@ func main() {
 			irc.Join("#" + ch)
 		}
 		botAdmins = sort.StringSlice(strings.Split(admin, " "))
-		sort.Sort(sort.Reverse(botAdmins))
 	})
 
 	ded := make(chan struct{})
