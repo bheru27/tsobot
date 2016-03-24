@@ -64,7 +64,7 @@ func main() {
 	cfg := client.NewConfig(nick)
 	if ssl {
 		cfg.SSL = true
-		cfg.SSLConfig = &tls.Config{ServerName: host}
+		cfg.SSLConfig = &tls.Config{ServerName: host, InsecureSkipVerify: true}
 		cfg.NewNick = func(n string) string { return n + "^" }
 	}
 	cfg.Server = fmt.Sprintf("%s:%d", host, port)
