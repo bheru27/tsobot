@@ -146,7 +146,7 @@ func main() {
 
 	botCommands = map[string]func(who, arg, nick string){
 		"bots": func(who, arg, nick string) {
-			sendMessage(who, "Reporting in! \x0310go\x0f get github.com/generaltso/tsobot")
+			sendMessage(who, "Reporting in! "+colorString("go", White, Black)+" get github.com/generaltso/tsobot")
 		},
 		"add_admin": func(who, arg, nick string) {
 			if !isAdmin(nick) {
