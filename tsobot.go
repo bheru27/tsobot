@@ -35,17 +35,10 @@ var admin string
  */
 type tsoLogger struct{}
 
-// mfw
-//var lines chan string
-
-func (l *tsoLogger) Debug(f string, a ...interface{}) {
-	//lines <- a[0].(string)
-
-	log.Printf("\n\n DEBUG \n\n"+f+"\n", a...)
-}
-func (l *tsoLogger) Info(f string, a ...interface{})  { log.Printf("\n\n INFO \n\n"+f+"\n", a...) }
-func (l *tsoLogger) Warn(f string, a ...interface{})  { log.Printf("\n\n WARN \n\n"+f+"\n", a...) }
-func (l *tsoLogger) Error(f string, a ...interface{}) { log.Printf("\n\n ERROR \n\n"+f+"\n", a...) }
+func (l *tsoLogger) Debug(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
+func (l *tsoLogger) Info(f string, a ...interface{})  { log.Printf(f+"\n", a...) }
+func (l *tsoLogger) Warn(f string, a ...interface{})  { log.Printf(f+"\n", a...) }
+func (l *tsoLogger) Error(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
 
 /**
  * More boilerplate
@@ -82,9 +75,25 @@ func isAdmin(nick string) bool {
 	ind := sort.SearchStrings(botAdmins, nick)
 	retval := ind < len(botAdmins) && botAdmins[ind] == nick
 	if !retval {
+		log.Printf("%#v\n", botAdmins)
 		sendMessage(nick, "Access denied.")
 	}
 	return retval
+}
+
+func addAdmin(nick string) {
+	botAdmins = append(botAdmins, nick)
+	botAdmins = sort.StringSlice(botAdmins)
+	sort.Sort(sort.Reverse(botAdmins))
+}
+
+func removeAdmin(nick string) {
+	ind := sort.SearchStrings(botAdmins, nick)
+	if ind < len(botAdmins) && botAdmins[ind] == nick {
+		botAdmins = append(botAdmins[:ind], botAdmins[ind+1:]...)
+		botAdmins = sort.StringSlice(botAdmins)
+		sort.Sort(sort.Reverse(botAdmins))
+	}
 }
 
 func main() {
@@ -126,6 +135,7 @@ func main() {
 			irc.Join("#" + ch)
 		}
 		botAdmins = sort.StringSlice(strings.Split(admin, " "))
+		sort.Sort(sort.Reverse(botAdmins))
 	})
 
 	ded := make(chan struct{})
@@ -141,11 +151,36 @@ func main() {
 		"bots": func(who, arg, nick string) {
 			sendMessage(who, "Reporting in! \x0310go\x0f get github.com/generaltso/tsobot")
 		},
-		"test": func(who, arg, nick string) {
+		"add_admin": func(who, arg, nick string) {
 			if !isAdmin(nick) {
 				return
 			}
-			irc.Whois(arg)
+			for _, adm := range strings.Split(arg, " ") {
+				irc.Whois(adm)
+			}
+		},
+		"remove_admin": func(who, arg, nick string) {
+			if !isAdmin(nick) {
+				return
+			}
+			for _, adm := range strings.Split(arg, " ") {
+				removeAdmin(adm)
+				sendMessage(adm, "see you space cowboy...")
+			}
+		},
+		"join": func(who, arg, nick string) {
+			if !isAdmin(nick) {
+				return
+			}
+			for _, ch := range strings.Split(arg, " ") {
+				irc.Join(ch)
+			}
+		},
+		"part": func(who, arg, nick string) {
+			if !isAdmin(nick) {
+				return
+			}
+			irc.Part(who, arg)
 		},
 		"tone_police": func(who, arg, nick string) {
 			if strings.TrimSpace(arg) == "" {
@@ -173,8 +208,20 @@ func main() {
 			sendMessage(who, translate(arg))
 		},
 	}
+	irc.HandleFunc("307", func(c *client.Conn, l *client.Line) {
+		if l.Args[0] == nick {
+			addAdmin(l.Args[1])
+			sendMessage(l.Args[1], "you know what you doing")
+		}
+		//log.Println("\n\n---\ngot auth !!\n")
+		//log.Printf("%#v %#v\n", c, l)
+	})
+	//irc.HandleFunc("318", func(c *client.Conn, l *client.Line) {
+	//log.Println("\n\n---\ngot end of whois\n\n")
+	//log.Printf("%#v %#v\n", c, l)
+	//})
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
-		log.Printf("%#v\n", l)
+		//log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
 		if who == nick {
 			who = l.Nick
