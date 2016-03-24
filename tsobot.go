@@ -35,10 +35,17 @@ var admin string
  */
 type tsoLogger struct{}
 
-func (l *tsoLogger) Debug(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
-func (l *tsoLogger) Info(f string, a ...interface{})  { log.Printf(f+"\n", a...) }
-func (l *tsoLogger) Warn(f string, a ...interface{})  { log.Printf(f+"\n", a...) }
-func (l *tsoLogger) Error(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
+// mfw
+//var lines chan string
+
+func (l *tsoLogger) Debug(f string, a ...interface{}) {
+	//lines <- a[0].(string)
+
+	log.Printf("\n\n DEBUG \n\n"+f+"\n", a...)
+}
+func (l *tsoLogger) Info(f string, a ...interface{})  { log.Printf("\n\n INFO \n\n"+f+"\n", a...) }
+func (l *tsoLogger) Warn(f string, a ...interface{})  { log.Printf("\n\n WARN \n\n"+f+"\n", a...) }
+func (l *tsoLogger) Error(f string, a ...interface{}) { log.Printf("\n\n ERROR \n\n"+f+"\n", a...) }
 
 /**
  * More boilerplate
@@ -138,7 +145,7 @@ func main() {
 			if !isAdmin(nick) {
 				return
 			}
-			irc.Whois(nick)
+			irc.Whois(arg)
 		},
 		"tone_police": func(who, arg, nick string) {
 			if strings.TrimSpace(arg) == "" {
@@ -166,7 +173,6 @@ func main() {
 			sendMessage(who, translate(arg))
 		},
 	}
-
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
