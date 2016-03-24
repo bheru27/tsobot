@@ -8,6 +8,8 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -15,6 +17,9 @@ import (
 	"github.com/fluffle/goirc/logging"
 )
 
+/**
+ * Configuration variables, passed in with command line flags
+ */
 var host string
 var port int
 var ssl bool
@@ -23,7 +28,11 @@ var pass string
 var join string
 var u string
 var p string
+var admin string
 
+/**
+ * Arbitrary way GoIRC handles logging
+ */
 type tsoLogger struct{}
 
 func (l *tsoLogger) Debug(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
@@ -31,13 +40,45 @@ func (l *tsoLogger) Info(f string, a ...interface{})  { log.Printf(f+"\n", a...)
 func (l *tsoLogger) Warn(f string, a ...interface{})  { log.Printf(f+"\n", a...) }
 func (l *tsoLogger) Error(f string, a ...interface{}) { log.Printf(f+"\n", a...) }
 
+/**
+ * More boilerplate
+ */
 func checkErr(err error) {
 	if err != nil {
 		log.Fatalln(err)
 	}
 }
 
+/**
+ * Botnet
+ */
+var botAdmins sort.StringSlice
+var botCommandRe *regexp.Regexp = regexp.MustCompile(`^\.(\w+)\s*(.*)$`)
+var botCommands map[string]func(who, arg, nick string)
 var sendMessage func(who, msg string)
+
+func parseMessage(who, msg, nick string) {
+	if !botCommandRe.MatchString(msg) {
+		return
+	}
+
+	m := botCommandRe.FindStringSubmatch(msg)
+	cmd := m[1]
+	arg := m[2]
+
+	if fn, ok := botCommands[cmd]; ok {
+		fn(who, arg, nick)
+	}
+}
+
+func isAdmin(nick string) bool {
+	ind := sort.SearchStrings(botAdmins, nick)
+	retval := ind < len(botAdmins) && botAdmins[ind] == nick
+	if !retval {
+		sendMessage(nick, "Access denied.")
+	}
+	return retval
+}
 
 func main() {
 	flag.StringVar(&host, "host", "irc.rizon.net", "host")
@@ -46,10 +87,12 @@ func main() {
 
 	flag.StringVar(&nick, "nick", "tsobot", "nick")
 	flag.StringVar(&pass, "pass", "", "NickServ IDENTIFY password (optional)")
-	flag.StringVar(&join, "join", "tso", "join these channels (space separated list)")
+	flag.StringVar(&join, "join", "tso", "space separated list of channels to join")
 
 	flag.StringVar(&u, "wuname", "", "watson username")
 	flag.StringVar(&p, "wpword", "", "watson password")
+
+	flag.StringVar(&admin, "admin", "tso", "space separated list of privileged nicks")
 
 	flag.Parse()
 
@@ -57,10 +100,8 @@ func main() {
 	signal.Notify(sig, os.Interrupt)
 	signal.Notify(sig, os.Kill)
 
-	l := &tsoLogger{}
-	logging.SetLogger(l)
+	logging.SetLogger(&tsoLogger{})
 
-	//irc := client.SimpleClient(nick)
 	cfg := client.NewConfig(nick)
 	if ssl {
 		cfg.SSL = true
@@ -77,6 +118,7 @@ func main() {
 		for _, ch := range strings.Split(join, " ") {
 			irc.Join("#" + ch)
 		}
+		botAdmins = sort.StringSlice(strings.Split(admin, " "))
 	})
 
 	ded := make(chan struct{})
@@ -88,20 +130,50 @@ func main() {
 		irc.Privmsg(who, msg)
 	}
 
+	botCommands = map[string]func(who, arg, nick string){
+		"bots": func(who, arg, nick string) {
+			sendMessage(who, "Reporting in! \x0310go\x0f get github.com/generaltso/tsobot")
+		},
+		"test": func(who, arg, nick string) {
+			if !isAdmin(nick) {
+				return
+			}
+			irc.Whois(nick)
+		},
+		"tone_police": func(who, arg, nick string) {
+			if strings.TrimSpace(arg) == "" {
+				sendMessage(who, "usage: .tone_police [INPUT]")
+				return
+			}
+			lines := tonePolice([]byte(`{"text":"` + arg + `"}`))
+			sendMessage(who, strings.Join(lines, " | "))
+		},
+		"rss": func(who, arg, nick string) {
+			if !isAdmin(nick) {
+				return
+			}
+			if strings.TrimSpace(arg) == "" {
+				sendMessage(who, "usage: .rss [URL]")
+				return
+			}
+			err := feed.Fetch(arg, nil)
+			if err != nil {
+				sendMessage(who, err.Error())
+			}
+		},
+		"trans": func(who, arg, nick string) {
+			arg = strings.Replace(arg, "/", "", -1)
+			sendMessage(who, translate(arg))
+		},
+	}
+
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
-		//log.Printf("%#v\n", l)
+		log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
 		if who == nick {
 			who = l.Nick
 		}
-		if msg == ".bots" || msg == "who is tsobot" {
-			irc.Privmsg(who, "Reporting in! \x0310go\x0f get github.com/generaltso/tsobot")
-			return
-		}
-		if l.Nick == "tso" && msg == ".test" {
-			irc.Quit("\"take off every `zig`\"")
-			return
-		}
+		parseMessage(who, msg, l.Nick)
 		if cmdRegexp.MatchString(msg) {
 			matches := cmdRegexp.FindAllStringSubmatch(msg, -1)
 			if len(matches) == 0 {
@@ -122,33 +194,6 @@ func main() {
 			}
 			irc.Privmsg(who, msg)
 			return
-		}
-		if strings.Index(msg, ".tone_police") == 0 {
-			if msg == ".tone_police" {
-				irc.Privmsg(who, "(feed me data)")
-				return
-			}
-			text := strings.Replace(msg, ".tone_police", "", -1)
-			lines := tonePolice([]byte(`{"text":"` + text + `"}`))
-			irc.Privmsg(who, strings.Join(lines, " | "))
-			return
-		}
-		if l.Nick == "tso" && strings.Index(msg, ".rss") == 0 {
-			if msg == ".rss" {
-				irc.Privmsg(who, "(enter rss url pls)")
-				return
-			}
-			badidea := strings.Replace(msg, ".rss ", "", -1)
-			err := feed.Fetch(badidea, nil)
-			if err != nil {
-				irc.Privmsg(who, err.Error())
-			}
-			return
-		}
-		if strings.Index(msg, ".trans") == 0 {
-			text := strings.Replace(msg, ".trans ", "", -1)
-			text = strings.Replace(text, "/", "", -1)
-			irc.Privmsg(who, translate(text))
 		}
 	})
 
