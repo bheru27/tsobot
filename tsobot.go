@@ -16,7 +16,6 @@ import (
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
 )
-import rss "github.com/jteeuwen/go-pkg-rss"
 
 /**
  * Configuration variables, passed in with command line flags
@@ -153,7 +152,6 @@ func main() {
 		irc.Privmsg(who, msg)
 	}
 
-	feed = rss.New(5, false, channelhandler, itemhandler)
 	noiz = make(chan *clickbait)
 
 	botCommands = map[string]*botCommand{
@@ -196,13 +194,8 @@ func main() {
 			}
 			subs = append(subs, &subscription{who: who, src: arg})
 			log.Printf("\n\nsubs:%#v\n\n", subs)
-			err := feed.Fetch(arg, nil)
-			if err != nil {
-				log.Panicln(err)
-				sendMessage(nick, err.Error())
-			} else {
-				sendMessage(who, "Subscribed "+who+" to "+arg)
-			}
+			go pollFeed(arg)
+			sendMessage(who, "Subscribed "+who+" to "+arg)
 		}},
 		"trans": &botCommand{false, func(who, arg, nick string) {
 			arg = strings.Replace(arg, "/", "", -1)

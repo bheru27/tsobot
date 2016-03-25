@@ -1,6 +1,10 @@
 package main
 
-import rss "github.com/jteeuwen/go-pkg-rss"
+import (
+	"time"
+
+	rss "github.com/jteeuwen/go-pkg-rss"
+)
 
 type subscription struct {
 	who string `irc channel`
@@ -25,6 +29,13 @@ func itemhandler(f *rss.Feed, channel *rss.Channel, items []*rss.Item) {
 	}
 }
 
-var feed *rss.Feed
+func pollFeed(url string) {
+	feed := rss.New(5, false, channelhandler, itemhandler)
+	for {
+		checkErr(feed.Fetch(url, nil))
+		<-time.After(time.Duration(feed.SecondsTillUpdate() * 1e9))
+	}
+}
+
 var noiz chan *clickbait
 var subs []*subscription
