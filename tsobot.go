@@ -55,7 +55,13 @@ func checkErr(err error) {
  */
 var botAdmins sort.StringSlice
 var botCommandRe *regexp.Regexp = regexp.MustCompile(`^\.(\w+)\s*(.*)$`)
-var botCommands map[string]func(who, arg, nick string)
+
+type botCommand struct {
+	admin bool
+	fn    func(who, arg, nick string)
+}
+
+var botCommands map[string]*botCommand
 var sendMessage func(who, msg string)
 
 func parseMessage(who, msg, nick string) {
@@ -67,19 +73,19 @@ func parseMessage(who, msg, nick string) {
 	cmd := m[1]
 	arg := m[2]
 
-	if fn, ok := botCommands[cmd]; ok {
-		fn(who, arg, nick)
+	if b, ok := botCommands[cmd]; ok {
+		if !b.admin || (b.admin && isAdmin(nick)) {
+			b.fn(who, arg, nick)
+		} else {
+			//log.Printf("%#v\n", botAdmins)
+			sendMessage(nick, "Access denied.")
+		}
 	}
 }
 
 func isAdmin(nick string) bool {
 	ind := sort.SearchStrings(botAdmins, nick)
-	retval := botAdmins[ind] == nick
-	if !retval {
-		log.Printf("%#v\n", botAdmins)
-		sendMessage(nick, "Access denied.")
-	}
-	return retval
+	return botAdmins[ind] == nick
 }
 
 func addAdmin(nick string) {
@@ -146,66 +152,53 @@ func main() {
 		irc.Privmsg(who, msg)
 	}
 
-	botCommands = map[string]func(who, arg, nick string){
-		"bots": func(who, arg, nick string) {
+	botCommands = map[string]*botCommand{
+		"bots": &botCommand{false, func(who, arg, nick string) {
 			sendMessage(who, "Reporting in! "+colorString("go", White, Black)+" get github.com/generaltso/tsobot")
-		},
-		"add_admin": func(who, arg, nick string) {
-			if !isAdmin(nick) {
-				return
-			}
+		}},
+		"add_admin": &botCommand{true, func(who, arg, nick string) {
 			for _, adm := range strings.Split(arg, " ") {
 				irc.Whois(adm)
 			}
-		},
-		"remove_admin": func(who, arg, nick string) {
-			if !isAdmin(nick) {
-				return
-			}
+		}},
+		"remove_admin": &botCommand{true, func(who, arg, nick string) {
 			for _, adm := range strings.Split(arg, " ") {
-				removeAdmin(adm)
-				sendMessage(adm, "see you space cowboy...")
+				if isAdmin(adm) {
+					removeAdmin(adm)
+					sendMessage(adm, "see you space cowboy...")
+				}
 			}
-		},
-		"join": func(who, arg, nick string) {
-			if !isAdmin(nick) {
-				return
-			}
+		}},
+		"join": &botCommand{true, func(who, arg, nick string) {
 			for _, ch := range strings.Split(arg, " ") {
 				irc.Join(ch)
 			}
-		},
-		"part": func(who, arg, nick string) {
-			if !isAdmin(nick) {
-				return
-			}
+		}},
+		"part": &botCommand{true, func(who, arg, nick string) {
 			irc.Part(who, arg)
-		},
-		"tone_police": func(who, arg, nick string) {
+		}},
+		"tone_police": &botCommand{false, func(who, arg, nick string) {
 			if strings.TrimSpace(arg) == "" {
 				sendMessage(who, "usage: .tone_police [INPUT]")
 				return
 			}
 			lines := tonePolice([]byte(`{"text":"` + arg + `"}`))
 			sendMessage(who, strings.Join(lines, " | "))
-		},
-		"rss": func(who, arg, nick string) {
-			if !isAdmin(nick) {
-				return
-			}
+		}},
+		"add_rss": &botCommand{true, func(who, arg, nick string) {
 			if strings.TrimSpace(arg) == "" {
-				sendMessage(who, "usage: .rss [URL]")
+				sendMessage(who, "usage: .add_rss [URL]")
 				return
 			}
 			err := feed.Fetch(arg, nil)
 			if err != nil {
-				sendMessage(who, err.Error())
+				sendMessage(nick, err.Error())
 			}
-		},
-		"trans": func(who, arg, nick string) {
+		}},
+		"trans": &botCommand{false, func(who, arg, nick string) {
 			arg = strings.Replace(arg, "/", "", -1)
 			sendMessage(who, translate(arg))
-		},
+		}},
 	}
 	irc.HandleFunc("307", func(c *client.Conn, l *client.Line) {
 		if l.Args[0] == nick {
