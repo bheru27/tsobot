@@ -3,3 +3,5 @@ client.Line.txt
 watson/*
 *.exe
 *.sw*
+.cache
+!.cache/.keep

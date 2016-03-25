@@ -29,6 +29,7 @@ var join string
 var u string
 var p string
 var admin string
+var cache_dir string
 
 /**
  * Arbitrary way GoIRC handles logging
@@ -107,6 +108,7 @@ func main() {
 	flag.StringVar(&p, "wpword", "", "watson password")
 
 	flag.StringVar(&admin, "admin", "tso", "space separated list of privileged nicks")
+	flag.StringVar(&cache_dir, "cache_dir", ".cache", "directory to cache datas like rss feeds")
 
 	flag.Parse()
 
