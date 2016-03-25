@@ -16,6 +16,7 @@ import (
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
 )
+import rss "github.com/jteeuwen/go-pkg-rss"
 
 /**
  * Configuration variables, passed in with command line flags
@@ -152,6 +153,9 @@ func main() {
 		irc.Privmsg(who, msg)
 	}
 
+	feed = rss.New(5, false, channelhandler, itemhandler)
+	noiz = make(chan *clickbait)
+
 	botCommands = map[string]*botCommand{
 		"bots": &botCommand{false, func(who, arg, nick string) {
 			sendMessage(who, "Reporting in! "+colorString("go", White, Black)+" get github.com/generaltso/tsobot")
@@ -190,9 +194,14 @@ func main() {
 				sendMessage(who, "usage: .add_rss [URL]")
 				return
 			}
+			subs = append(subs, &subscription{who: who, src: arg})
+			log.Printf("\n\nsubs:%#v\n\n", subs)
 			err := feed.Fetch(arg, nil)
 			if err != nil {
+				log.Panicln(err)
 				sendMessage(nick, err.Error())
+			} else {
+				sendMessage(who, "Subscribed "+who+" to "+arg)
 			}
 		}},
 		"trans": &botCommand{false, func(who, arg, nick string) {
@@ -246,17 +255,26 @@ func main() {
 		log.Fatalln("Connection error:", err)
 	}
 
-	select {
-	case <-sig:
-		log.Println("we get signal")
-		for _, ch := range strings.Split(join, " ") {
-			irc.Part("#"+ch, "we get signal")
+	for {
+		select {
+		case bait := <-noiz:
+			log.Printf("\n\nbait:%#v\n\n", bait)
+			for _, ch := range subs {
+				if ch.src == bait.src {
+					sendMessage(ch.who, fmt.Sprintf("%s — !%s", bait.tit, bait.url))
+				}
+			}
+		case <-sig:
+			log.Println("we get signal")
+			for _, ch := range strings.Split(join, " ") {
+				irc.Part("#"+ch, "we get signal")
+			}
+			<-time.After(time.Second)
+			irc.Quit()
+			os.Exit(0)
+		case <-ded:
+			log.Println("disconnected.")
+			os.Exit(1)
 		}
-		<-time.After(time.Second)
-		irc.Quit()
-		os.Exit(0)
-	case <-ded:
-		log.Println("disconnected.")
-		os.Exit(1)
 	}
 }
