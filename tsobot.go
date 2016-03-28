@@ -46,7 +46,7 @@ func (l *tsoLogger) Error(f string, a ...interface{}) { log.Printf(f+"\n", a...)
  */
 func checkErr(err error) {
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 }
 
@@ -152,7 +152,9 @@ func main() {
 		irc.Privmsg(who, msg)
 	}
 
+	cache = make(chan *clickbait)
 	noiz = make(chan *clickbait)
+	go cacheHandler()
 
 	botCommands = map[string]*botCommand{
 		"bots": &botCommand{false, func(who, arg, nick string) {
