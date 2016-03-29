@@ -30,6 +30,8 @@ func hashFn(input string) string {
 	return fmt.Sprintf("%x", md5.Sum([]byte(input)))
 }
 
+var getLines func(string, string) []byte
+
 func cacheHandler() {
 	/*
 		CREATE TABLE `clickbait` (
@@ -43,6 +45,20 @@ func cacheHandler() {
 	db, err := sql.Open("sqlite3", "./.cache/tsobot.db")
 	checkErr(err)
 	defer db.Close()
+
+	getLines = func(field, value string) []byte {
+		stmt, err := db.Prepare("SELECT `line` FROM `log` WHERE " + field + " = ?")
+		checkErr(err)
+		ret := ""
+		rows, err := stmt.Query(value)
+		checkErr(err)
+		for rows.Next() {
+			var ln string
+			rows.Scan(&ln)
+			ret += ln + "\n"
+		}
+		return []byte(ret)
+	}
 
 	ins, err := db.Prepare("INSERT INTO `clickbait` (`hash`, `url`, `title`, `createdat`) VALUES (?, ?, ?, ?)")
 	checkErr(err)

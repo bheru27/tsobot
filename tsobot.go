@@ -154,6 +154,10 @@ func main() {
 	chat = make(chan *line)
 	go cacheHandler()
 
+	chanRe := regexp.MustCompile(`(?i)^\#[^\s]+$`)
+	nickRe := regexp.MustCompile(`(?i)^[a-z_\-\[\]\\^{}|` + "`" + `][a-z0-9_\-\[\]\\^{}|` + "`" + `]*$`)
+	urlRe := regexp.MustCompile(`(?i)^https?://[^\s]+$`)
+
 	botCommands = map[string]*botCommand{
 		"bots": &botCommand{false, func(who, arg, nick string) {
 			sendMessage(who, "Reporting in! "+colorString("go", White, Black)+" get github.com/generaltso/tsobot")
@@ -180,13 +184,49 @@ func main() {
 			irc.Part(who, arg)
 		}},
 		"tone_police": &botCommand{false, func(who, arg, nick string) {
-			if strings.TrimSpace(arg) == "" {
-				sendMessage(who, "usage: .tone_police [INPUT]")
+			arg = strings.TrimSpace(arg)
+			var input []byte
+			var debug_input string
+			switch {
+			case arg == "":
+				input = getLines("nick", nick)
+				debug_input = "nick " + nick
+			case nickRe.MatchString(arg):
+				input = getLines("nick", arg)
+				debug_input = "nick " + arg
+			case chanRe.MatchString(arg):
+				input = getLines("chan", arg)
+				debug_input = "channel " + arg
+			case urlRe.MatchString(arg):
+				sendMessage(who, "Sorry! No URL support yet.")
+				return
+			default:
+				input = []byte(arg)
+				debug_input = "...oh wait no you put in a sentence " + dongers.Raise("Panic")
+			}
+			if len(input) == 0 {
+				sendMessage(who, dongers.Raise("Sadness")+" No lines in buffer for "+debug_input)
 				return
 			}
-			tone := tonePolice([]byte(arg))
+
+			log.Println("__DEBUG", debug_input, ":", string(input))
+
+			tone := tonePolice(input)
+
+			// temporary, need to change API...
+			if tone.Neutral == 1 {
+				tone.Neutral = 0
+			}
+
 			emote, score := tone.Max()
-			sendMessage(who, fmt.Sprintf("%s: %.2f%% %s", emote, score*100.0, dongers.Raise(emote)))
+
+			var response string
+			if score == 0 {
+				response = dongers.Raise("Panic") + " (no information in result set)"
+			} else {
+				response = fmt.Sprintf("%s: %.2f%% %s", emote, score*100.0, dongers.Raise(emote))
+			}
+			sendMessage(who, response)
 		}},
 		"add_rss": &botCommand{true, func(who, arg, nick string) {
 			if strings.TrimSpace(arg) == "" {
