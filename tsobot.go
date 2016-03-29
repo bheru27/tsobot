@@ -198,8 +198,13 @@ func main() {
 				input = getLines("chan", arg)
 				debug_input = "channel " + arg
 			case urlRe.MatchString(arg):
-				sendMessage(who, "Sorry! No URL support yet.")
-				return
+				text, err := scrape(arg)
+				if err != nil {
+					log.Println("__ERROR", err)
+					sendMessage(who, err.Error())
+					return
+				}
+				input = []byte(text)
 			default:
 				input = []byte(arg)
 				debug_input = "...oh wait no you put in a sentence " + dongers.Raise("Panic")
@@ -227,6 +232,7 @@ func main() {
 				response = fmt.Sprintf("%s: %.2f%% %s", emote, score*100.0, dongers.Raise(emote))
 			}
 			sendMessage(who, response)
+			irc.Notice(nick, fmt.Sprintf("anger %.2f disgust %.2f fear %.2f happy %.2f neutral %.2f sad %.2f surprise %.2f", tone.Anger, tone.Disgust, tone.Fear, tone.Happiness, tone.Neutral, tone.Sadness, tone.Surprise))
 		}},
 		"add_rss": &botCommand{true, func(who, arg, nick string) {
 			if strings.TrimSpace(arg) == "" {
