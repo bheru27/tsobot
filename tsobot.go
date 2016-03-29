@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"os/signal"
 	"regexp"
@@ -63,9 +62,9 @@ type botCommand struct {
 var botCommands map[string]*botCommand
 var sendMessage func(who, msg string)
 
-func parseMessage(who, msg, nick string) {
+func parseMessage(who, msg, nick string) bool {
 	if !botCommandRe.MatchString(msg) {
-		return
+		return false
 	}
 
 	m := botCommandRe.FindStringSubmatch(msg)
@@ -79,7 +78,9 @@ func parseMessage(who, msg, nick string) {
 			//log.Printf("%#v\n", botAdmins)
 			sendMessage(nick, "Access denied.")
 		}
+		return true
 	}
+	return false
 }
 
 func isAdmin(nick string) bool {
@@ -150,6 +151,7 @@ func main() {
 
 	cache = make(chan *clickbait)
 	noiz = make(chan *clickbait)
+	chat = make(chan *line)
 	go cacheHandler()
 
 	botCommands = map[string]*botCommand{
@@ -219,28 +221,10 @@ func main() {
 		if who == nick {
 			who = l.Nick
 		}
-		parseMessage(who, msg, l.Nick)
-		if cmdRegexp.MatchString(msg) {
-			matches := cmdRegexp.FindAllStringSubmatch(msg, -1)
-			if len(matches) == 0 {
-				return
-			}
-			for _, m := range matches {
-				var new string
-				if e, ok := emoji[m[1]]; ok {
-					new = e
-				} else if o, ok := other[m[1]]; ok {
-					new = o[rand.Intn(len(o))]
-				} else if j, ok := jmote[m[1]]; ok {
-					new = j[rand.Intn(len(j))]
-				} else {
-					return
-				}
-				msg = strings.Replace(msg, m[0], new, 1)
-			}
-			irc.Privmsg(who, msg)
-			return
+		if !parseMessage(who, msg, l.Nick) {
+			go logLine(l)
 		}
+
 	})
 
 	if err := irc.ConnectTo(host); err != nil {

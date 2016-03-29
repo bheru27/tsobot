@@ -47,23 +47,31 @@ func cacheHandler() {
 	ins, err := db.Prepare("INSERT INTO `clickbait` (`hash`, `url`, `title`, `createdat`) VALUES (?, ?, ?, ?)")
 	checkErr(err)
 	defer ins.Close()
+	ins2, err := db.Prepare("INSERT INTO `log` (`chan`, `nick`, `line`, `time`) VALUES (?, ?, ?, ?)")
+	checkErr(err)
+	defer ins2.Close()
 
 	cnt, err := db.Prepare("SELECT COUNT(*) FROM `clickbait` WHERE `hash` = ?")
 	checkErr(err)
 	defer cnt.Close()
 
 	for {
-		bait := <-cache
-		hash := hashFn(bait.url)
-		row := cnt.QueryRow(hash)
-		var count int
-		row.Scan(&count)
-		if count == 0 {
-			now := time.Now().Unix()
-			log.Printf("%#v\n%#v\n%#v\n%#v\n", hash, bait.url, bait.tit, now)
-			_, err := ins.Exec(hash, bait.url, bait.tit, now)
+		select {
+		case bait := <-cache:
+			hash := hashFn(bait.url)
+			row := cnt.QueryRow(hash)
+			var count int
+			row.Scan(&count)
+			if count == 0 {
+				now := time.Now().Unix()
+				log.Printf("%#v\n%#v\n%#v\n%#v\n", hash, bait.url, bait.tit, now)
+				_, err := ins.Exec(hash, bait.url, bait.tit, now)
+				checkErr(err)
+				noiz <- bait
+			}
+		case line := <-chat:
+			_, err := ins2.Exec(line.channel, line.nick, line.text, line.time)
 			checkErr(err)
-			noiz <- bait
 		}
 	}
 }
