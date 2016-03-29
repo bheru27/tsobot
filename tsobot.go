@@ -15,6 +15,7 @@ import (
 
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
+	"github.com/generaltso/tsobot/dongers"
 )
 
 /**
@@ -26,8 +27,6 @@ var ssl bool
 var nick string
 var pass string
 var join string
-var u string
-var p string
 var admin string
 var cache_dir string
 
@@ -110,9 +109,6 @@ func main() {
 	flag.StringVar(&pass, "pass", "", "NickServ IDENTIFY password (optional)")
 	flag.StringVar(&join, "join", "tso", "space separated list of channels to join")
 
-	flag.StringVar(&u, "wuname", "", "watson username")
-	flag.StringVar(&p, "wpword", "", "watson password")
-
 	flag.StringVar(&admin, "admin", "tso", "space separated list of privileged nicks")
 	flag.StringVar(&cache_dir, "cache_dir", ".cache", "directory to cache datas like rss feeds")
 
@@ -186,8 +182,9 @@ func main() {
 				sendMessage(who, "usage: .tone_police [INPUT]")
 				return
 			}
-			lines := tonePolice([]byte(`{"text":"` + arg + `"}`))
-			sendMessage(who, strings.Join(lines, " | "))
+			tone := tonePolice([]byte(arg))
+			emote, score := tone.Max()
+			sendMessage(who, fmt.Sprintf("%s: %.2f%% %s", emote, score*100.0, dongers.Raise(emote)))
 		}},
 		"add_rss": &botCommand{true, func(who, arg, nick string) {
 			if strings.TrimSpace(arg) == "" {
