@@ -148,10 +148,6 @@ func main() {
 		irc.Privmsg(who, msg)
 	}
 
-	cache = make(chan *clickbait)
-	noiz = make(chan *clickbait)
-	go cacheHandler()
-
 	botCommands = map[string]*botCommand{
 		"bots": &botCommand{false, func(who, arg, nick string) {
 			sendMessage(who, "Reporting in! "+colorString("go", White, Black)+" get github.com/generaltso/tsobot")
@@ -185,16 +181,6 @@ func main() {
 			tone := tonePolice([]byte(arg))
 			emote, score := tone.Max()
 			sendMessage(who, fmt.Sprintf("%s: %.2f%% %s", emote, score*100.0, dongers.Raise(emote)))
-		}},
-		"add_rss": &botCommand{true, func(who, arg, nick string) {
-			if strings.TrimSpace(arg) == "" {
-				sendMessage(who, "usage: .add_rss [URL]")
-				return
-			}
-			subs = append(subs, &subscription{who: who, src: arg})
-			log.Printf("\n\nsubs:%#v\n\n", subs)
-			go pollFeed(arg)
-			sendMessage(who, "Subscribed "+who+" to "+arg)
 		}},
 		"trans": &botCommand{false, func(who, arg, nick string) {
 			arg = strings.Replace(arg, "/", "", -1)
@@ -247,26 +233,17 @@ func main() {
 		log.Fatalln("Connection error:", err)
 	}
 
-	for {
-		select {
-		case bait := <-noiz:
-			log.Printf("\n\nbait:%#v\n\n", bait)
-			for _, ch := range subs {
-				if ch.src == bait.src {
-					sendMessage(ch.who, fmt.Sprintf("%s — !%s", bait.tit, bait.url))
-				}
-			}
-		case <-sig:
-			log.Println("we get signal")
-			for _, ch := range strings.Split(join, " ") {
-				irc.Part("#"+ch, "we get signal")
-			}
-			<-time.After(time.Second)
-			irc.Quit()
-			os.Exit(0)
-		case <-ded:
-			log.Println("disconnected.")
-			os.Exit(1)
+	select {
+	case <-sig:
+		log.Println("we get signal")
+		for _, ch := range strings.Split(join, " ") {
+			irc.Part("#"+ch, "we get signal")
 		}
+		<-time.After(time.Second)
+		irc.Quit()
+		os.Exit(0)
+	case <-ded:
+		log.Println("disconnected.")
+		os.Exit(1)
 	}
 }
