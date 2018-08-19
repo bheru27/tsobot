@@ -3,31 +3,31 @@ package main
 import "fmt"
 
 const (
-	White      int = 0
-	Black      int = 1
-	DarkBlue   int = 2
-	DarkGreen  int = 3
-	Red        int = 4
-	DarkRed    int = 5
-	DarkViolet int = 6
-	Orange     int = 7
-	Yellow     int = 8
-	LightGreen int = 9
-	Cyan       int = 10
-	LightCyan  int = 11
-	Blue       int = 12
-	Violet     int = 13
-	DarkGray   int = 14
-	LightGray  int = 15
+	White      = 0
+	Black      = 1
+	DarkBlue   = 2
+	DarkGreen  = 3
+	Red        = 4
+	DarkRed    = 5
+	DarkViolet = 6
+	Orange     = 7
+	Yellow     = 8
+	LightGreen = 9
+	Cyan       = 10
+	LightCyan  = 11
+	Blue       = 12
+	Violet     = 13
+	DarkGray   = 14
+	LightGray  = 15
 
-	Bold          int = 0x02
-	Color         int = 0x03
-	Italic        int = 0x09
-	StrikeThrough int = 0x13
-	Reset         int = 0x0f
-	Underline     int = 0x15
-	Underline2    int = 0x1f
-	Reverse       int = 0x16
+	Bold          = 0x02
+	Color         = 0x03
+	Italic        = 0x09
+	StrikeThrough = 0x13
+	Reset         = 0x0f
+	Underline     = 0x15
+	Underline2    = 0x1f
+	Reverse       = 0x16
 )
 
 func colorString(str string, col ...int) string {
