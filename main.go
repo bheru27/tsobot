@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"math/rand"
 	"os"
@@ -48,6 +50,8 @@ func parseMessage(who, msg, nick string) {
 		}
 	}
 }
+
+var sb *Scoreboard
 
 func main() {
 	flag.StringVar(
@@ -114,6 +118,9 @@ func main() {
 		}
 		<-time.After(time.Second)
 		irc.Quit()
+		if sb != nil {
+			sb.Save()
+		}
 		os.Exit(0)
 	}()
 
@@ -144,6 +151,8 @@ func main() {
 	sendMessage = func(who, msg string) {
 		irc.Privmsg(who, msg)
 	}
+
+	sb = newScoreboard("scoreboard.json")
 
 	irc.HandleFunc("307", func(c *client.Conn, l *client.Line) {
 		if l.Args[0] == nick {
@@ -201,4 +210,34 @@ func checkErr(err error) {
 	if err != nil {
 		log.Panicln(err)
 	}
+}
+
+func fileExists(filename string) bool {
+	f, err := os.Open(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	checkErr(f.Close())
+	checkErr(err)
+	return true
+}
+
+func fileGetContents(filename string) []byte {
+	contents := new(bytes.Buffer)
+	f, err := os.Open(filename)
+	checkErr(err)
+	_, err = io.Copy(contents, f)
+	f.Close()
+	if err != io.EOF {
+		checkErr(err)
+	}
+	return contents.Bytes()
+}
+
+func filePutContents(filename string, contents []byte) {
+	f, err := os.Create(filename)
+	checkErr(err)
+	_, err = f.Write(contents)
+	checkErr(err)
+	checkErr(f.Close())
 }

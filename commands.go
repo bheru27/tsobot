@@ -43,4 +43,59 @@ func init() {
 			sendMessage(who, translate(arg))
 		},
 	}
+	botCommands["addpoint"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			user := strings.SplitN(arg, " ", 1)[0]
+			if user == "" {
+				return
+			}
+			sb.AddPoint(user)
+			sendMessage(who, sb.Score(user).String())
+		},
+	}
+	botCommands["rmpoint"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			user := strings.SplitN(arg, " ", 1)[0]
+			if user == "" {
+				return
+			}
+			sb.RmPoint(user)
+			sendMessage(who, sb.Score(user).String())
+		},
+	}
+	botCommands["score"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			s := sb.Score(nick)
+			msg := s.String()
+			if s.Rank == 1 {
+				msg = "H I G H S C O R E " + msg
+				m := make([]string, len(msg))
+				for i, b := range msg {
+					m[i] = colorString(string(b), i%14+2)
+				}
+				msg = strings.Join(m, "")
+			}
+			sendMessage(who, msg)
+		},
+	}
+	botCommands["scores"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			highscores := sb.HighScores()
+			msg := make([]string, 0, len(highscores))
+			for i, s := range highscores {
+				if s == nil {
+					break
+				}
+				msg[i] = s.String()
+			}
+			if len(msg) == 0 {
+				msg[0] = "(empty)"
+			}
+			sendMessage(who, strings.Join(msg, " | "))
+		},
+	}
 }
