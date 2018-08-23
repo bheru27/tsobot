@@ -11,8 +11,8 @@ import (
 
 func assert(t *testing.T, a, b interface{}) {
 	if !reflect.DeepEqual(a, b) {
-		fmt.Printf("expected: %#v\n", a)
-		fmt.Printf("actual:   %#v\n", b)
+		fmt.Printf("expected: %#v\n", b)
+		fmt.Printf("actual:   %#v\n", a)
 		t.FailNow()
 	}
 }
@@ -44,4 +44,27 @@ func TestScoreboard(t *testing.T) {
 	wg.Wait()
 	assert(t, sb.Score("user"), &Score{Nick: "user", Rank: 1, Plus: plus, Minus: minus, Total: total})
 	sb.Save()
+}
+
+func TestSed(t *testing.T) {
+	{
+		res, err := sed("APPLES", "apples", "bananas", true, false)
+		assert(t, err, nil)
+		assert(t, res, "bananas")
+	}
+	{
+		res, err := sed("lmao dude weed", `(\w+)\s(\w+)\s(\w+)`, `\2 \3 \1`, false, false)
+		assert(t, err, nil)
+		assert(t, res, "dude weed lmao")
+	}
+	{
+		res, err := sed("lMAo dUdE WeED", `(lmao) (dude) (weed)`, `\2 \3 \1`, true, false)
+		assert(t, err, nil)
+		assert(t, res, "dUdE WeED lMAo")
+	}
+}
+func TestSeddy(t *testing.T) {
+	res, err := seddy("dude weed lmao", `s/(\w+).*/\1\1\1\1`)
+	assert(t, err, nil)
+	assert(t, res, "dudedudedudedude")
 }
