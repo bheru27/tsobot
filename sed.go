@@ -53,7 +53,6 @@ func seddy(input, s string) (result string, err error) {
 	rep := string(cmd[1])
 	ins := false
 	glo := false
-	fmt.Printf("%#v\n", cmd)
 	if len(cmd) == 3 {
 		for _, flag := range cmd[2] {
 			switch flag {
