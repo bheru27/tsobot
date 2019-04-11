@@ -12,6 +12,7 @@ import (
 	"os/signal"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/fluffle/goirc/client"
@@ -171,6 +172,57 @@ func main() {
 	//log.Printf("%#v %#v\n", c, l)
 	//})
 
+	// XXX
+	// XXX                      THIS IS THE BAD ZONE
+	// XXX
+
+	chatlog := make([][]string, 100, 100)
+	mu := sync.Mutex{}
+
+	logMessage := func(msg, nick string) {
+		mu.Lock()
+		defer mu.Unlock()
+		for i := range chatlog {
+			if i+1 >= 100 {
+				break
+			}
+			chatlog[i+1] = chatlog[i]
+		}
+		chatlog[0] = []string{nick, msg}
+	}
+	trySeddy := func(who, msg, nick string) {
+		if strings.Contains(msg, ": s/") {
+			ln := strings.SplitN(msg, ": ", 2)
+			if len(ln) != 2 {
+				return
+			}
+			nick, msg = ln[0], ln[1]
+		}
+		if strings.HasPrefix(msg, "s/") {
+			mu.Lock()
+			chat := chatlog[:]
+			mu.Unlock()
+
+			for _, ln := range chat {
+				if ln[0] == nick {
+					res, err := seddy(ln[1], msg)
+					if err != nil {
+						irc.Privmsg(who, err.Error())
+						return
+					}
+					if res != "" {
+						irc.Privmsg(who, res)
+						return
+					}
+				}
+			}
+		}
+	}
+
+	// XXX
+	// XXX  END OF BAD ZONE
+	// XXX
+
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		//log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
@@ -199,6 +251,8 @@ func main() {
 			irc.Privmsg(who, msg)
 			return
 		}
+		trySeddy(who, msg, l.Nick)
+		logMessage(msg, l.Nick)
 	})
 
 	if err := irc.ConnectTo(host); err != nil {
