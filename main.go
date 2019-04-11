@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/fluffle/goirc/client"
+	"github.com/fluffle/goirc/logging"
 )
 
 // Configuration variables, passed in with command line flags
@@ -124,6 +125,9 @@ func main() {
 		os.Exit(0)
 	}()
 
+	// goirc logging...
+	logging.SetLogger(&debugLogger{})
+
 	cfg := client.NewConfig(nick)
 	if ssl {
 		cfg.SSL = true
@@ -166,6 +170,7 @@ func main() {
 	//log.Println("\n\n---\ngot end of whois\n\n")
 	//log.Printf("%#v %#v\n", c, l)
 	//})
+
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		//log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
@@ -241,3 +246,11 @@ func filePutContents(filename string, contents []byte) {
 	checkErr(err)
 	checkErr(f.Close())
 }
+
+// goirc logging...
+type debugLogger struct{}
+
+func (l *debugLogger) Debug(f string, a ...interface{}) { fmt.Printf(f+"\n", a...) }
+func (l *debugLogger) Info(f string, a ...interface{})  { fmt.Printf(f+"\n", a...) }
+func (l *debugLogger) Warn(f string, a ...interface{})  { fmt.Printf(f+"\n", a...) }
+func (l *debugLogger) Error(f string, a ...interface{}) { fmt.Printf(f+"\n", a...) }
