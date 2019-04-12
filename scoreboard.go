@@ -63,6 +63,7 @@ func newScoreboard(filename string) *Scoreboard {
 	if fileExists(filename) {
 		data := fileGetContents(filename)
 		checkErr(json.Unmarshal(data, &sb))
+		scores = sb.Scores
 		for _, s := range sb.Scores {
 			sb.lookup[s.Nick] = s
 		}

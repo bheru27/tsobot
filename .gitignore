@@ -5,3 +5,4 @@ watson/*
 *.sw*
 .cache
 !.cache/.keep
+scoreboard.json
