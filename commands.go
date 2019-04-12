@@ -105,4 +105,10 @@ func init() {
 			sendMessage(who, strings.Join(msg, " | "))
 		},
 	}
+	botCommands["askhn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("ask")) }}
+	botCommands["showhn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("show")) }}
+	botCommands["tophn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("top")) }}
+	botCommands["besthn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("best")) }}
+	botCommands["newhn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("new")) }}
+
 }
