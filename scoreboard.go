@@ -115,6 +115,9 @@ func (sb *Scoreboard) RmPoint(nick string) {
 func (sb *Scoreboard) HighScores() []*Score {
 	sb.mu.Lock()
 	defer sb.mu.Unlock()
+	if len(sb.Scores) < 10 {
+		return sb.Scores[:]
+	}
 	return sb.Scores[:10]
 }
 

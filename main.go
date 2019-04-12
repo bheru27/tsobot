@@ -176,19 +176,21 @@ func main() {
 	// XXX                      THIS IS THE BAD ZONE
 	// XXX
 
-	chatlog := make([][]string, 100, 100)
+	chatlogs := map[string][][]string{}
 	mu := sync.Mutex{}
 
-	logMessage := func(msg, nick string) {
+	logMessage := func(who, msg, nick string) {
 		mu.Lock()
 		defer mu.Unlock()
-		for i := range chatlog {
-			if i+1 >= 100 {
-				break
-			}
+		chatlog, ok := chatlogs[who]
+		if !ok {
+			chatlog = make([][]string, 100, 100)
+		}
+		for i := 98; i >= 0; i-- {
 			chatlog[i+1] = chatlog[i]
 		}
 		chatlog[0] = []string{nick, msg}
+		chatlogs[who] = chatlog
 	}
 	trySeddy := func(who, msg, nick string) {
 		if strings.Contains(msg, ": s/") {
@@ -200,6 +202,11 @@ func main() {
 		}
 		if strings.HasPrefix(msg, "s/") {
 			mu.Lock()
+			chatlog, ok := chatlogs[who]
+			if !ok {
+				mu.Unlock()
+				return
+			}
 			chat := chatlog[:]
 			mu.Unlock()
 
@@ -252,7 +259,7 @@ func main() {
 			return
 		}
 		trySeddy(who, msg, l.Nick)
-		logMessage(msg, l.Nick)
+		logMessage(who, msg, l.Nick)
 	})
 
 	if err := irc.ConnectTo(host); err != nil {

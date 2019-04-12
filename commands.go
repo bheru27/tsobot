@@ -46,6 +46,9 @@ func init() {
 	botCommands["addpoint"] = &botCommand{
 		false,
 		func(who, arg, nick string) {
+			if !strings.HasPrefix(who, "#") {
+				return
+			}
 			user := strings.SplitN(arg, " ", 1)[0]
 			if user == "" {
 				return
@@ -57,6 +60,9 @@ func init() {
 	botCommands["rmpoint"] = &botCommand{
 		false,
 		func(who, arg, nick string) {
+			if !strings.HasPrefix(who, "#") {
+				return
+			}
 			user := strings.SplitN(arg, " ", 1)[0]
 			if user == "" {
 				return
@@ -71,12 +77,12 @@ func init() {
 			s := sb.Score(nick)
 			msg := s.String()
 			if s.Rank == 1 {
-				msg = "H I G H S C O R E " + msg
-				m := make([]string, len(msg))
-				for i, b := range msg {
-					m[i] = colorString(string(b), i%14+2)
+				congratulations := []rune(" ~ H I G H  S C O R E ~")
+				m := []string{}
+				for i, b := range congratulations {
+					m = append(m, colorString(string(b), i%14+2))
 				}
-				msg = strings.Join(m, "")
+				msg = msg + strings.Join(m, "")
 			}
 			sendMessage(who, msg)
 		},
@@ -85,15 +91,16 @@ func init() {
 		false,
 		func(who, arg, nick string) {
 			highscores := sb.HighScores()
-			msg := make([]string, 0, len(highscores))
-			for i, s := range highscores {
+			msg := []string{}
+			for _, s := range highscores {
 				if s == nil {
 					break
 				}
-				msg[i] = s.String()
+				msg = append(msg, s.String())
 			}
 			if len(msg) == 0 {
-				msg[0] = "(empty)"
+				sendMessage(who, "(scoreboard is empty)")
+				return
 			}
 			sendMessage(who, strings.Join(msg, " | "))
 		},
