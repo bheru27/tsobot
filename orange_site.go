@@ -53,9 +53,9 @@ func hn(storyType string) string {
 
 	ret := story.Title
 	if story.Url != "" {
-		ret += " - " + story.Url
+		ret += " - ." + story.Url
 	} else {
-		ret += " - https://news.ycombinator.com/item?id=" + strconv.Itoa(story.Id)
+		ret += " - .https://news.ycombinator.com/item?id=" + strconv.Itoa(story.Id)
 	}
 
 	return ret
