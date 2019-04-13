@@ -19,7 +19,7 @@ func init() {
 	botCommands["bots"] = &botCommand{
 		false,
 		func(who, arg, nick string) {
-			sendMessage(who, "Reporting in! [ "+colorString("Go!", Cyan)+" ] github.com/generaltso/tsobot")
+			sendMessage(who, "Reporting in! [ "+colorString("Go!", Cyan)+" ] https://github.com/generaltso/tsobot")
 		},
 	}
 	botCommands["join"] = &botCommand{
@@ -50,6 +50,7 @@ func init() {
 				return
 			}
 			user := strings.SplitN(arg, " ", 1)[0]
+			user = strings.TrimSpace(user)
 			if user == "" {
 				return
 			}
@@ -64,6 +65,7 @@ func init() {
 				return
 			}
 			user := strings.SplitN(arg, " ", 1)[0]
+			user = strings.TrimSpace(user)
 			if user == "" {
 				return
 			}
