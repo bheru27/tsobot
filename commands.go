@@ -115,7 +115,16 @@ func init() {
 	botCommands["w"] = &botCommand{
 		false,
 		func(who, arg, nick string) {
-			sendMessage(who, wttr(arg))
+			args := strings.Split(arg, " ")
+			freedom := false
+			if len(args) > 1 {
+				switch args[0] {
+				case "-f", "-F", "--fahrenheit", "--freedom-units":
+					freedom = true
+					args = args[1:]
+				}
+			}
+			sendMessage(who, wttr(strings.Join(args, " "), freedom))
 		},
 	}
 }
