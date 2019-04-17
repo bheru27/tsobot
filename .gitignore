@@ -6,3 +6,4 @@ watson/*
 .cache
 !.cache/.keep
 scoreboard.json
+*.json

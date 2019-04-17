@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"runtime/debug"
 	"sort"
 	"strings"
 	"sync"
@@ -17,9 +18,13 @@ import (
 
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
+	"github.com/generaltso/tsobot/dongers"
 )
 
-// Configuration variables, passed in with command line flags
+//
+// boring stuff
+//
+
 var (
 	host      string
 	port      int
@@ -29,13 +34,20 @@ var (
 	join      string
 	admin     string
 	cache_dir string
+
+	irc         *client.Conn
+	sendMessage func(who, msg string)
 )
 
-var irc *client.Conn
-
-var sendMessage func(who, msg string)
-
 func parseMessage(who, msg, nick string) {
+	defer func() {
+		if x := recover(); x != nil {
+			sendMessage(who, "🔥 🔥 🔥 "+dongers.Raise("panic")+"🔥 🔥 🔥")
+			log.Println(x)
+			debug.PrintStack()
+		}
+	}()
+
 	if !botCommandRe.MatchString(msg) {
 		return
 	}
@@ -53,59 +65,30 @@ func parseMessage(who, msg, nick string) {
 	}
 }
 
-var sb *Scoreboard
+//
+// exciting stuff
+//
+
+var (
+	sb        *Scoreboard
+	chatlogs  = map[string][][]string{}
+	chatlogMu sync.Mutex
+)
 
 func main() {
-	flag.StringVar(
-		&host,
-		"host",
-		"irc.rizon.net",
-		"host",
-	)
-	flag.IntVar(
-		&port,
-		"port",
-		6697,
-		"port",
-	)
-	flag.BoolVar(
-		&ssl,
-		"ssl",
-		true,
-		"use ssl?",
-	)
+	//
+	// boring stuff
+	//
+	flag.StringVar(&host, "host", "irc.rizon.net", "host")
+	flag.IntVar(&port, "port", 6697, "port")
+	flag.BoolVar(&ssl, "ssl", true, "use ssl?")
 
-	flag.StringVar(
-		&nick,
-		"nick",
-		"tsobot",
-		"nick",
-	)
-	flag.StringVar(
-		&pass,
-		"pass",
-		"",
-		"NickServ IDENTIFY password (optional)",
-	)
-	flag.StringVar(
-		&join,
-		"join",
-		"tso",
-		"space separated list of channels to join",
-	)
+	flag.StringVar(&nick, "nick", "tsobot", "nick")
+	flag.StringVar(&pass, "pass", "", "NickServ IDENTIFY password (optional)")
+	flag.StringVar(&join, "join", "tso", "space separated list of channels to join")
 
-	flag.StringVar(
-		&admin,
-		"admin",
-		"tso",
-		"space separated list of privileged nicks",
-	)
-	flag.StringVar(
-		&cache_dir,
-		"cache_dir",
-		".cache",
-		"directory to cache datas like rss feeds",
-	)
+	flag.StringVar(&admin, "admin", "tso", "space separated list of privileged nicks")
+	flag.StringVar(&cache_dir, "cache_dir", ".cache", "directory to cache datas like rss feeds")
 
 	flag.Parse()
 
@@ -123,6 +106,7 @@ func main() {
 		if sb != nil {
 			sb.Save()
 		}
+		saveQuotes("quotes.json")
 		os.Exit(0)
 	}()
 
@@ -153,11 +137,14 @@ func main() {
 		close(ded)
 	})
 
-	sendMessage = func(who, msg string) {
-		irc.Privmsg(who, msg)
-	}
+	sendMessage = func(who, msg string) { irc.Privmsg(who, msg) }
+
+	//
+	// exciting stuff
+	//
 
 	sb = newScoreboard("scoreboard.json")
+	loadQuotes("quotes.json")
 
 	irc.HandleFunc("307", func(c *client.Conn, l *client.Line) {
 		if l.Args[0] == nick {
@@ -176,12 +163,9 @@ func main() {
 	// XXX                      THIS IS THE BAD ZONE
 	// XXX
 
-	chatlogs := map[string][][]string{}
-	mu := sync.Mutex{}
-
 	logMessage := func(who, msg, nick string) {
-		mu.Lock()
-		defer mu.Unlock()
+		chatlogMu.Lock()
+		defer chatlogMu.Unlock()
 		chatlog, ok := chatlogs[who]
 		if !ok {
 			chatlog = make([][]string, 100, 100)
@@ -201,16 +185,19 @@ func main() {
 			nick, msg = ln[0], ln[1]
 		}
 		if strings.HasPrefix(msg, "s/") {
-			mu.Lock()
+			chatlogMu.Lock()
 			chatlog, ok := chatlogs[who]
 			if !ok {
-				mu.Unlock()
+				chatlogMu.Unlock()
 				return
 			}
 			chat := chatlog[:]
-			mu.Unlock()
+			chatlogMu.Unlock()
 
 			for _, ln := range chat {
+				if ln == nil {
+					break
+				}
 				if ln[0] == nick {
 					res, err := seddy(ln[1], msg)
 					if err != nil {
@@ -244,14 +231,19 @@ func main() {
 			}
 			for _, m := range matches {
 				new := ""
-				if e, ok := emoji[m[1]]; ok {
-					new = e
-				} else if o, ok := other[m[1]]; ok {
-					new = o[rand.Intn(len(o))]
-				} else if j, ok := jmote[m[1]]; ok {
-					new = j[rand.Intn(len(j))]
-				} else {
-					return
+				switch m[1] {
+				case "anger", "disgust", "fear", "happiness", "neutral", "sadness", "surprise", "panic":
+					new = dongers.Raise(m[1])
+				default:
+					if e, ok := emoji[m[1]]; ok {
+						new = e
+					} else if o, ok := other[m[1]]; ok {
+						new = o[rand.Intn(len(o))]
+					} else if j, ok := jmote[m[1]]; ok {
+						new = j[rand.Intn(len(j))]
+					} else {
+						return
+					}
 				}
 				msg = strings.Replace(msg, m[0], new, 1)
 			}

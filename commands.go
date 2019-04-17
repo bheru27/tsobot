@@ -121,6 +121,39 @@ func init() {
 			sendMessage(who, translate(arg))
 		},
 	}
+	botCommands["addquote"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			if !strings.HasPrefix(who, "#") {
+				return
+			}
+
+			/*
+				user := strings.SplitN(arg, " ", 1)[0]
+				user = strings.TrimSpace(user)
+				if user == "" || strings.ToLower(user) == strings.ToLower(nick) {
+					return
+				}
+			*/
+			sendMessage(who, addQuote(who, arg, nick))
+		},
+	}
+	botCommands["quote"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			if !strings.HasPrefix(who, "#") {
+				return
+			}
+
+			user := strings.SplitN(arg, " ", 1)[0]
+			user = strings.TrimSpace(user)
+			if user == "" {
+				sendMessage(who, getRandQuote(who))
+			} else {
+				sendMessage(who, getQuote(who, user))
+			}
+		},
+	}
 	setCooldown("addpoint", time.Second*30)
 	botCommands["addpoint"] = &botCommand{
 		false,

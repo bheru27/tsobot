@@ -6,14 +6,14 @@ var emoticons map[string][]string
 
 func init() {
 	emoticons = map[string][]string{
-		"Anger":     Anger,
-		"Disgust":   Disgust,
-		"Fear":      Fear,
-		"Happiness": Happiness,
-		"Neutral":   Neutral,
-		"Sadness":   Sadness,
-		"Surprise":  Surprise,
-		"Panic":     Panic,
+		"anger":     Anger,
+		"disgust":   Disgust,
+		"fear":      Fear,
+		"happiness": Happiness,
+		"neutral":   Neutral,
+		"sadness":   Sadness,
+		"surprise":  Surprise,
+		"panic":     Panic,
 	}
 }
 
