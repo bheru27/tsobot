@@ -127,14 +127,6 @@ func init() {
 			if !strings.HasPrefix(who, "#") {
 				return
 			}
-
-			/*
-				user := strings.SplitN(arg, " ", 1)[0]
-				user = strings.TrimSpace(user)
-				if user == "" || strings.ToLower(user) == strings.ToLower(nick) {
-					return
-				}
-			*/
 			sendMessage(who, addQuote(who, arg, nick))
 		},
 	}
@@ -164,7 +156,7 @@ func init() {
 			if !strings.HasPrefix(who, "#") {
 				return
 			}
-			user := strings.SplitN(arg, " ", 1)[0]
+			user := strings.SplitN(arg, " ", 2)[0]
 			user = strings.TrimSpace(user)
 			if user == "" || strings.ToLower(user) == strings.ToLower(nick) {
 				return

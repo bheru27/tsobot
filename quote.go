@@ -33,7 +33,7 @@ func saveQuotes(filename string) {
 }
 
 func addQuote(channel, arg, nick string) string {
-	args := strings.SplitN(strings.TrimSpace(arg), " ", 1)
+	args := strings.SplitN(strings.TrimSpace(arg), " ", 2)
 	src := args[0]
 	src = strings.TrimSpace(nobracketsRe.ReplaceAllString(strings.ToLower(src), ""))
 	if src == "" {
