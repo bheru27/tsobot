@@ -89,6 +89,7 @@ here:
 }
 
 func getQuote(channel, src string) string {
+	src = strings.TrimSpace(nobracketsRe.ReplaceAllString(strings.ToLower(src), ""))
 	quotesMu.Lock()
 	defer quotesMu.Unlock()
 	if _, ok := quotes[channel]; ok {
