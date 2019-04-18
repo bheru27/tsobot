@@ -173,7 +173,7 @@ func main() {
 		for i := 98; i >= 0; i-- {
 			chatlog[i+1] = chatlog[i]
 		}
-		chatlog[0] = []string{nick, msg}
+		chatlog[0] = []string{strings.ToLower(nick), msg}
 		chatlogs[who] = chatlog
 	}
 	trySeddy := func(who, msg, nick string) {
@@ -198,7 +198,7 @@ func main() {
 				if ln == nil {
 					break
 				}
-				if ln[0] == nick {
+				if ln[0] == strings.ToLower(nick) {
 					res, err := seddy(ln[1], msg)
 					if err != nil {
 						irc.Privmsg(who, err.Error())
