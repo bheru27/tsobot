@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"regexp"
 	"strings"
@@ -217,13 +218,13 @@ func init() {
 				if s == nil {
 					break
 				}
-				msg = append(msg, s.String())
+				msg = append(msg, fmt.Sprintf("%s %dpts", s.Nick, s.Total))
 			}
 			if len(msg) == 0 {
 				sendMessage(who, "(scoreboard is empty)")
 				return
 			}
-			sendMessage(who, strings.Join(msg, " | "))
+			sendMessage(who, strings.Join(msg, " "))
 		},
 	}
 	botCommands["askhn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("ask")) }}
