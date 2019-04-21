@@ -23,7 +23,7 @@ func wttr(loc string, freedom bool) string {
 	checkErr(err)
 	if resp.StatusCode != 200 {
 		printResponse(resp)
-		return fmt.Sprint(resp.StatusCode)
+		return fmt.Sprint(resp.Status)
 	}
 	body, _ := ioutil.ReadAll(resp.Body)
 	return string(body)
