@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	White      = 0
@@ -36,4 +39,13 @@ func colorString(str string, col ...int) string {
 	} else {
 		return fmt.Sprintf("\x03%d%s\x0f", col[0], str)
 	}
+}
+
+func rainbowText(text string) string {
+	congratulations := []rune(text)
+	m := []string{}
+	for i, b := range congratulations {
+		m = append(m, colorString(string(b), i%14+2))
+	}
+	return strings.Join(m, "")
 }

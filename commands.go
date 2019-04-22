@@ -195,12 +195,7 @@ func init() {
 			s := sb.Score(nick)
 			msg := s.String()
 			if s.Rank == 1 {
-				congratulations := []rune(" ~ H I G H  S C O R E ~")
-				m := []string{}
-				for i, b := range congratulations {
-					m = append(m, colorString(string(b), i%14+2))
-				}
-				msg = msg + strings.Join(m, "")
+				msg = msg + rainbowText(" ~ H I G H  S C O R E ~")
 			}
 			sendMessage(who, msg)
 		},
@@ -246,6 +241,17 @@ func init() {
 				}
 			}
 			sendMessage(who, wttr(strings.Join(args, " "), freedom))
+		},
+	}
+	botCommands["ngate"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			snark, isNew := ngate()
+			sendMessage(who, snark)
+			if isNew {
+				<-time.After(time.Second * 5)
+				sendMessage(who, rainbowText("new n-gate available")+": http://n-gate.com/")
+			}
 		},
 	}
 }
