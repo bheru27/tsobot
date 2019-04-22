@@ -89,9 +89,11 @@ func ngate() (string, bool) {
 			pubDate, err := time.Parse("Mon, _2 Jan 2006 15:04:05 MST", item.PubDate)
 			checkErr(err)
 
-			if time.Since(ngateLastPubDate) > 0 {
+			if ngateLastPubDate.Before(pubDate) {
 				ngateLastPubDate = pubDate
 				fresh = true
+			} else if len(ngateQuotes) > 0 {
+				break
 			}
 
 			lines := strings.Split(item.Description, "</p> <p>")
