@@ -63,6 +63,7 @@ func TestSed(t *testing.T) {
 		assert(t, res, "dUdE WeED lMAo")
 	}
 }
+
 func TestSeddy(t *testing.T) {
 	res, err := seddy("dude weed lmao", `s/(\w+).*/\1\1\1\1`)
 	assert(t, err, nil)

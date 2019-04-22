@@ -18,7 +18,7 @@ func hn(storyType string) string {
 		checkErr(err)
 		if resp.StatusCode != 200 {
 			printResponse(resp)
-			return fmt.Sprint(resp.Status)
+			return resp.Status
 		}
 
 		checkErr(json.NewDecoder(resp.Body).Decode(&items))
@@ -41,7 +41,7 @@ func hn(storyType string) string {
 	checkErr(err)
 	if resp.StatusCode != 200 {
 		printResponse(resp)
-		return fmt.Sprint(resp.Status)
+		return resp.Status
 	}
 
 	var story struct {

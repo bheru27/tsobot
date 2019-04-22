@@ -7,3 +7,4 @@ watson/*
 !.cache/.keep
 scoreboard.json
 *.json
+rss.txt

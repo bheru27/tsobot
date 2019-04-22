@@ -232,6 +232,7 @@ func init() {
 	botCommands["tophn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("top")) }}
 	botCommands["besthn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("best")) }}
 	botCommands["newhn"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, hn("new")) }}
+	botCommands["goodpost"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, lobsters()) }}
 	botCommands["w"] = &botCommand{
 		false,
 		func(who, arg, nick string) {
