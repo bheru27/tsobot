@@ -260,6 +260,10 @@ func main() {
 
 	<-ded
 	log.Println("disconnected.")
+	if sb != nil {
+		sb.Save()
+	}
+	saveQuotes("quotes.json")
 	os.Exit(1)
 
 }
