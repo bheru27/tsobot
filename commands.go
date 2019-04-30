@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -254,4 +255,19 @@ func init() {
 			}
 		},
 	}
+	botCommands["todo"] = &botCommand{true, func(who, arg, nick string) {
+		arg = strings.TrimSpace(arg)
+		if arg == "" {
+			for i, item := range listTodo() {
+				sendMessage(nick, fmt.Sprintf("%d: %s", i, item))
+			}
+		} else {
+			sendMessage(who, addTodo(arg))
+		}
+	}}
+	botCommands["done"] = &botCommand{true, func(who, arg, nick string) {
+		arg = strings.TrimSpace(arg)
+		idx, _ := strconv.Atoi(arg)
+		sendMessage(who, removeTodo(idx))
+	}}
 }

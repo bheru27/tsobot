@@ -107,6 +107,7 @@ func main() {
 			sb.Save()
 		}
 		saveQuotes("quotes.json")
+		saveTodo("todo.json")
 		os.Exit(0)
 	}()
 
@@ -145,6 +146,7 @@ func main() {
 
 	sb = newScoreboard("scoreboard.json")
 	loadQuotes("quotes.json")
+	loadTodo("todo.json")
 
 	irc.HandleFunc("307", func(c *client.Conn, l *client.Line) {
 		if l.Args[0] == nick {
@@ -264,6 +266,7 @@ func main() {
 		sb.Save()
 	}
 	saveQuotes("quotes.json")
+	saveTodo("todo.json")
 	os.Exit(1)
 
 }
