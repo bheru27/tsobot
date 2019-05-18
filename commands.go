@@ -214,7 +214,7 @@ func init() {
 				if s == nil {
 					break
 				}
-				msg = append(msg, fmt.Sprintf("%s %dpts", s.Nick, s.Total))
+				msg = append(msg, "_"+s.String())
 			}
 			if len(msg) == 0 {
 				sendMessage(who, "(scoreboard is empty)")
