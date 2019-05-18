@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"regexp"
 	"runtime/debug"
 	"sort"
 	"strings"
@@ -219,6 +220,8 @@ func main() {
 	// XXX  END OF BAD ZONE
 	// XXX
 
+	timestampRe := regexp.MustCompile(`\d+:\d+:\d+`)
+
 	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
 		//log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
@@ -226,11 +229,12 @@ func main() {
 			who = l.Nick
 		}
 		parseMessage(who, msg, l.Nick)
-		if cmdRegexp.MatchString(msg) {
-			matches := cmdRegexp.FindAllStringSubmatch(msg, -1)
+		if emojiRe.MatchString(msg) && !timestampRe.MatchString(msg) {
+			matches := emojiRe.FindAllStringSubmatch(msg, -1)
 			if len(matches) == 0 {
 				return
 			}
+			originalMsg := msg
 			for _, m := range matches {
 				new := ""
 				switch m[1] {
@@ -243,14 +247,16 @@ func main() {
 						new = o[rand.Intn(len(o))]
 					} else if j, ok := jmote[m[1]]; ok {
 						new = j[rand.Intn(len(j))]
-					} else {
-						return
 					}
 				}
-				msg = strings.Replace(msg, m[0], new, 1)
+				if new != "" {
+					msg = strings.Replace(msg, m[0], new, 1)
+				}
 			}
-			irc.Privmsg(who, msg)
-			return
+			if msg != originalMsg {
+				irc.Privmsg(who, msg)
+				return
+			}
 		}
 		trySeddy(who, msg, l.Nick)
 		logMessage(who, msg, l.Nick)
