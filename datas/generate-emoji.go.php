@@ -8,52 +8,93 @@ var	emojiRe = regexp.MustCompile(`:([^\s]+?):`)
 
 var emoji = map[string]string{
 <?php
-$other = [];
-$emoji = file_get_contents('full-emoji-list.html');
-preg_match_all("/<tr>(.*?)<\/tr>/mis", $emoji, $m, PREG_SET_ORDER);
-array_shift($m);
-$names = [];
-foreach($m as $sample) {
-    if(!preg_match("/<td class='chars'>(.*)<\/td>/", $sample[1], $u)) continue;
-    $unicode = $u[1];
-    if(!preg_match_all("/<td class='name'>(.*)<\/td>/", $sample[1], $n)) continue;
-    if(preg_match_all("/<a.*?>(.*?)<\/a>/", $n[1][0], $o)) {
-        $words = $o[1];
-        foreach($words as $word) {
-            $other[$word][] = $unicode;
+$seen    = [];
+$repeats = [];
+
+foreach(file('emoji-test.txt') as $ln) {
+    if($ln[0] === '#') continue;
+    $ln = trim($ln);
+    if($ln === '') continue;
+
+    $ln    = substr($ln, strpos($ln, '#')+2);
+    $emoji = substr($ln, 0, strpos($ln, ' '));
+    $desc  = substr($ln, strpos($ln, ' ')+1);
+
+    // TRUE equality, I don't see color
+    $desc = preg_replace('/: .+ skin tone.*/', '', $desc);
+
+    // or families as groups of individuals
+    if(strpos($desc, 'family') !== false) {
+        $desc = 'family';
+    }
+
+    // or even the mf WORLD
+    if(strpos($desc, 'globe') !== false) {
+        $desc = 'globe';
+    }
+
+    // or “Japanese” “““buttons”””
+    $desc = str_replace('Japanese “', '', $desc);
+    $desc = str_replace('” button', '', $desc);
+
+    // OR ANY OF THE FLAGS OF THE WORLD
+    $desc = str_replace('flag: ', '', $desc);
+
+    $desc = strtolower($desc);
+    $desc = str_replace('’', '_', $desc);
+    $desc = str_replace(' ', '_', $desc);
+    $desc = str_replace('-', '_', $desc);
+
+    if(in_array($desc, $seen)) {
+        if(isset($repeats[$desc])) {
+            $repeats[$desc][] = $emoji;
+        } else {
+            $repeats[$desc] = [$emoji];
         }
+    } else {
+        echo "\t\"$desc\": \"$emoji\",\n";
     }
-    foreach(explode("<br>≊", $n[1][0]) as $name) {
-        $name = sanitize($name);
-        if(strstr($name, '_type_') || in_array($name, $names)) continue;
-        println($unicode, $name);
-        $names[] = $name;
+    $seen[] = $desc;
+
+    $before = $desc;
+
+    // weasel words
+    $desc = preg_replace('/_(face|monkey|hand|hands|back_of|gesture)$/', '', $desc);
+    $desc = preg_replace('/_(face|facing)_/', '_', $desc);
+    $desc = preg_replace('/^(hand_with|face_with|backhand_index|index|ear_with)_/', '', $desc);
+
+    if($desc === $before) continue;
+
+    if(in_array($desc, $seen)) {
+        if(isset($repeats[$desc])) {
+            $repeats[$desc][] = $emoji;
+        } else {
+            $repeats[$desc] = [$emoji];
+        }
+    } else {
+        echo "\t\"$desc\": \"$emoji\",\n";
     }
+    $seen[] = $desc;
+
+}
+?>
 }
 
-function println($unicode, $name) {
-    echo '"', $name, '": "', $unicode, '",', "\n";
+var other = map[string][]string{
+<?php
+foreach($repeats as $word => $emojis) {
+    echo "\t\"$word\": []string{\"", implode('","', $emojis), "\"},\n";
 }
+?>
+}
+
+var jmote = map[string][]string{
+<?php
 
 function sanitize($name) {
     return preg_replace('/[^\w\+]+/', '_', trim(strtolower($name)));
 }
-?>
-}
 
-var other map[string][]string = map[string][]string{
-<?php
-foreach($other as $word => $emojis) {
-    echo '"', sanitize($word), '": []string{', 
-        '"',
-        implode('","', $emojis),
-        '"},', "\n";
-}
-?>
-}
-
-var jmote map[string][]string = map[string][]string{
-<?php
 $d = dir('emot');
 while(($f = $d->read())!==false) {
     if(is_dir($f) || !preg_match('/^(\w+)\.txt$/', $f, $m)) continue;
