@@ -14,17 +14,26 @@ func sed(s, pattern, replace string, insensitive, global bool) (result string, e
 	if err != nil {
 		return
 	}
-	m := re.FindStringSubmatch(s)
-	if m == nil {
-		return
-	}
-	n := 1
 	if global {
-		n = -1
-	}
-	result = strings.Replace(s, m[0], replace, n)
-	for i := 0; i < len(m); i++ {
-		result = strings.Replace(result, "\\"+string(byte(48+i)), m[i], -1)
+		for _, m := range re.FindAllStringSubmatch(s, -1) {
+			if m == nil {
+				return
+			}
+			s = strings.Replace(s, m[0], replace, 1)
+			result = s
+			for i := 0; i < len(m); i++ {
+				result = strings.Replace(result, "\\"+string(byte(48+i)), m[i], -1)
+			}
+		}
+	} else {
+		m := re.FindStringSubmatch(s)
+		if m == nil {
+			return
+		}
+		result = strings.Replace(s, m[0], replace, 1)
+		for i := 0; i < len(m); i++ {
+			result = strings.Replace(result, "\\"+string(byte(48+i)), m[i], -1)
+		}
 	}
 	return
 }
