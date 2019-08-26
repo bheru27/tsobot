@@ -112,6 +112,18 @@ func main() {
 		os.Exit(0)
 	}()
 
+	// periodically write this stuff to disk I guess
+	go func() {
+		for {
+			<-time.After(time.Minute * 30)
+			if sb != nil {
+				sb.Save()
+			}
+			saveQuotes("quotes.json")
+			saveTodo("todo.json")
+		}
+	}()
+
 	// goirc logging...
 	logging.SetLogger(&debugLogger{})
 
