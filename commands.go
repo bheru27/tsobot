@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
+	"math/rand"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -19,6 +22,9 @@ var (
 
 	botCooldown   = map[string]*botCommandCooldown{}
 	botCooldownMu sync.Mutex
+
+	textfiles   = map[string][]string{}
+	textfilesMu sync.Mutex
 )
 
 type botCommand struct {
@@ -270,4 +276,36 @@ func init() {
 		idx, _ := strconv.Atoi(arg)
 		sendMessage(who, removeTodo(idx))
 	}}
+	botCommands["shrug"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, `¯\_(ツ)_/¯`) }}
+	botCommands["smug"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, `( ≖‿≖)`) }}
+	botCommands["denko"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, "(´･ω･`)") }}
+
+	botCommands["noided"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, randomChoice("grips")) }}
+	botCommands["spooky"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, randomChoice("spooks")) }}
+}
+
+func randomChoice(filename string) string {
+	textfilesMu.Lock()
+	defer textfilesMu.Unlock()
+
+	lines, ok := textfiles[filename]
+
+	if !ok {
+		f, err := os.Open("texts/" + filename + ".txt")
+		if err != nil {
+			return err.Error()
+		}
+		lines = []string{}
+		scanner := bufio.NewScanner(f)
+		for scanner.Scan() {
+			ln := strings.TrimSpace(scanner.Text())
+			if ln != "" {
+				lines = append(lines, ln)
+			}
+		}
+		textfiles[filename] = lines
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	return lines[rand.Intn(len(lines))]
 }
