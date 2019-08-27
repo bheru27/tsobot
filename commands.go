@@ -282,6 +282,7 @@ func init() {
 
 	botCommands["noided"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, randomChoice("grips")) }}
 	botCommands["spooky"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, randomChoice("spooks")) }}
+	botCommands["zerowing"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, randomChoice("zerowing")) }}
 }
 
 func randomChoice(filename string) string {
