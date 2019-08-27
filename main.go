@@ -206,16 +206,23 @@ func main() {
 			if !ok || len(chatlog) == 0 {
 				return
 			}
-			ln := chatlog[0][1]
-			rn := make([]rune, len([]rune(ln)))
-			for i, c := range []rune(ln) {
-				if i&1 == 1 {
-					rn[i] = rune(strings.ToUpper(string(c))[0])
-				} else {
-					rn[i] = rune(strings.ToLower(string(c))[0])
+			for _, ln := range chatlog {
+				if ln == nil {
+					break
+				}
+				if ln[0] == strings.ToLower(user) {
+					rn := make([]rune, len([]rune(ln[1])))
+					for i, c := range []rune(ln[1]) {
+						if i&1 == 1 {
+							rn[i] = rune(strings.ToUpper(string(c))[0])
+						} else {
+							rn[i] = rune(strings.ToLower(string(c))[0])
+						}
+					}
+					sendMessage(who, string(rn))
+					return
 				}
 			}
-			sendMessage(who, string(rn))
 		}}
 
 	trySeddy := func(who, msg, nick string) {
