@@ -310,7 +310,7 @@ func main() {
 		if strings.Contains(msg, "normie") || strings.Contains(msg, "normalfag") || strings.Contains(msg, "normans") {
 			rand.Seed(time.Now().UnixNano())
 			sendMessage(who, "\x02\x034REE"+strings.Repeat("E", rand.Intn(10)))
-		} else if strings.Contains(msg, "ree") {
+		} else if msg == "ree" {
 			sendMessage(who, "roo normans get out 🐸")
 		} else if strings.Contains(msg, ":^)") {
 			sendMessage(who, "(^:")
