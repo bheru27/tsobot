@@ -191,6 +191,33 @@ func main() {
 		chatlog[0] = []string{strings.ToLower(nick), msg}
 		chatlogs[who] = chatlog
 	}
+	botCommands["mock"] = &botCommand{
+		false,
+		func(who, arg, nick string) {
+			user := strings.SplitN(arg, " ", 1)[0]
+			user = strings.TrimSpace(user)
+
+			if !strings.HasPrefix(who, "#") || user == "" {
+				return
+			}
+			chatlogMu.Lock()
+			defer chatlogMu.Unlock()
+			chatlog, ok := chatlogs[who]
+			if !ok || len(chatlog) == 0 {
+				return
+			}
+			ln := chatlog[0][1]
+			rn := make([]rune, len([]rune(ln)))
+			for i, c := range []rune(ln) {
+				if i&1 == 1 {
+					rn[i] = rune(strings.ToUpper(string(c))[0])
+				} else {
+					rn[i] = rune(strings.ToLower(string(c))[0])
+				}
+			}
+			sendMessage(who, string(rn))
+		}}
+
 	trySeddy := func(who, msg, nick string) {
 		if strings.Contains(msg, ": s/") {
 			ln := strings.SplitN(msg, ": ", 2)
