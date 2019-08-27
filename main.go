@@ -306,6 +306,17 @@ func main() {
 		}
 		trySeddy(who, msg, l.Nick)
 		logMessage(who, msg, l.Nick)
+		msg = strings.ToLower(msg)
+		if strings.Contains(msg, "normie") || strings.Contains(msg, "normalfag") || strings.Contains(msg, "normans") {
+			rand.Seed(time.Now().UnixNano())
+			sendMessage(who, "\x02\x034REE"+strings.Repeat("E", rand.Intn(10)))
+		} else if strings.Contains(msg, "ree") {
+			sendMessage(who, "roo normans get out 🐸")
+		} else if strings.Contains(msg, ":^)") {
+			sendMessage(who, "(^:")
+		} else if strings.Contains(msg, "(^:") {
+			sendMessage(who, ":^)")
+		}
 	})
 
 	if err := irc.ConnectTo(host); err != nil {
