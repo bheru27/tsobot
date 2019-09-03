@@ -47,7 +47,28 @@ func addQuote(channel, arg, nick string) string {
 	}
 
 	if len(args) > 1 {
-		q = args[1]
+		quote := args[1]
+		chatlogMu.Lock()
+		defer chatlogMu.Unlock()
+
+		if logs, ok := chatlogs[channel]; ok {
+			for _, ln := range logs {
+				if ln == nil {
+					break
+				}
+				if ln[0] == src {
+					if ln[1] == quote {
+						q = quote
+						goto here
+					}
+				}
+			}
+		}
+		shitlistMu.Lock()
+		shitlist = append(shitlist, strings.ToLower(nick))
+		shitlistMu.Unlock()
+
+		return src + " never said that, " + nick + " is commiting slanderous libel and treason and has been permanently prevented from interacting with this bot EVER AGAIN."
 	} else {
 		chatlogMu.Lock()
 		defer chatlogMu.Unlock()

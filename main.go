@@ -38,9 +38,12 @@ var (
 
 	irc         *client.Conn
 	sendMessage func(who, msg string)
+
+	shitlist   []string
+	shitlistMu sync.Mutex
 )
 
-func parseMessage(who, msg, nick string) {
+func parseMessage(who, msg, nick string) bool {
 	defer func() {
 		if x := recover(); x != nil {
 			sendMessage(who, "🔥 🔥 🔥 "+dongers.Raise("panic")+"🔥 🔥 🔥")
@@ -49,8 +52,17 @@ func parseMessage(who, msg, nick string) {
 		}
 	}()
 
+	shitlistMu.Lock()
+	for _, shitter := range shitlist {
+		if strings.ToLower(nick) == shitter {
+			shitlistMu.Unlock()
+			return true
+		}
+	}
+	shitlistMu.Unlock()
+
 	if !botCommandRe.MatchString(msg) {
-		return
+		return false
 	}
 
 	m := botCommandRe.FindStringSubmatch(msg)
@@ -63,7 +75,9 @@ func parseMessage(who, msg, nick string) {
 			//log.Printf("%#v\n", botAdmins)
 			sendMessage(nick, "Access denied.")
 		}
+		return true
 	}
+	return false
 }
 
 //
@@ -274,7 +288,9 @@ func main() {
 		if who == nick {
 			who = l.Nick
 		}
-		parseMessage(who, msg, l.Nick)
+		if parseMessage(who, msg, l.Nick) {
+			return
+		}
 		if emojiRe.MatchString(msg) && !timestampRe.MatchString(msg) {
 			matches := emojiRe.FindAllStringSubmatch(msg, -1)
 			if len(matches) == 0 {
