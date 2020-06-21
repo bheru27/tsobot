@@ -285,6 +285,18 @@ func init() {
 	botCommands["zerowing"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, randomChoice("zerowing")) }}
 
 	botCommands["cite"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, "\x1d\x0312[citation needed]") }}
+
+	cnt := 0
+	botCommands["wake"] = &botCommand{false, func(who, arg, nick string) {
+		sendMessage(who, func() string {
+			cnt++
+			if cnt >= 100 {
+				cnt = 0
+				return "SAVE ME"
+			}
+			return "(can't wake up)"
+		}())
+	}}
 }
 
 func randomChoice(filename string) string {
