@@ -283,7 +283,7 @@ func main() {
 
 	timestampRe := regexp.MustCompile(`\d+:\d+:\d+`)
 
-	irc.HandleFunc(client.PRIVMSG, func(c *client.Conn, l *client.Line) {
+	msgHandler := func(c *client.Conn, l *client.Line) {
 		//log.Printf("%#v\n", l)
 		who, msg := l.Args[0], l.Args[1]
 		if who == nick {
@@ -334,7 +334,9 @@ func main() {
 		} else if strings.Contains(msg, "(^:") {
 			sendMessage(who, ":^)")
 		}
-	})
+	}
+	irc.HandleFunc(client.PRIVMSG, msgHandler)
+	irc.HandleFunc(client.ACTION, msgHandler)
 
 	if err := irc.ConnectTo(host); err != nil {
 		log.Fatalln("Connection error:", err)
