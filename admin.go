@@ -1,11 +1,13 @@
 package main
 
 import (
-	"sort"
 	"strings"
 )
 
+var botAdmins map[string]struct{}
+
 func init() {
+	botAdmins = map[string]struct{}{}
 	botCommands["add_admin"] = &botCommand{
 		true,
 		func(who, arg, nick string) {
@@ -25,26 +27,26 @@ func init() {
 			}
 		},
 	}
+	botCommands["shitcan"] = &botCommand{
+		true,
+		func(who, arg, nick string) {
+			shitlistMu.Lock()
+			shitlist = append(shitlist, strings.TrimSpace(arg))
+			shitlistMu.Unlock()
+			sendMessage(who, "rekt")
+		},
+	}
 }
 
-var botAdmins sort.StringSlice
-
 func isAdmin(nick string) bool {
-	idx := sort.SearchStrings(botAdmins, nick)
-	if idx < 0 {
-		return false
-	}
-	return botAdmins[idx] == nick
+	_, ok := botAdmins[nick]
+	return ok
 }
 
 func addAdmin(nick string) {
-	botAdmins = sort.StringSlice(append(botAdmins, nick))
+	botAdmins[nick] = struct{}{}
 }
 
 func removeAdmin(nick string) {
-	idx := sort.SearchStrings(botAdmins, nick)
-	if idx < 0 || botAdmins[idx] != nick {
-		return
-	}
-	botAdmins = sort.StringSlice(append(botAdmins[:idx], botAdmins[idx+1:]...))
+	delete(botAdmins, nick)
 }

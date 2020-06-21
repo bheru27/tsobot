@@ -12,7 +12,6 @@ import (
 	"os/signal"
 	"regexp"
 	"runtime/debug"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -157,7 +156,9 @@ func main() {
 		for _, ch := range strings.Split(join, " ") {
 			irc.Join("#" + ch)
 		}
-		botAdmins = sort.StringSlice(strings.Split(admin, " "))
+		for _, nick := range strings.Split(admin, " ") {
+			addAdmin(nick)
+		}
 	})
 
 	ded := make(chan struct{})
