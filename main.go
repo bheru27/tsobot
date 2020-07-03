@@ -18,7 +18,7 @@ import (
 
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
-	"github.com/generaltso/tsobot/dongers"
+	"github.com/dayvonjersen/tsobot/dongers"
 )
 
 //

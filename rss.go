@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/generaltso/tsobot/strip"
+	"github.com/dayvonjersen/tsobot/strip"
 )
 
 type (
