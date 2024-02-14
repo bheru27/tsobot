@@ -19,7 +19,7 @@ foreach(file('emoji-test.txt') as $ln) {
     $ln    = substr($ln, strpos($ln, '#')+2);
     $emoji = substr($ln, 0, strpos($ln, ' '));
     $desc  = substr($ln, strpos($ln, ' ')+1);
-
+    $desc = preg_replace("/^E\d+\.\d+\s/", "", $desc);
     // TRUE equality, I don't see color
     $desc = preg_replace('/: .+ skin tone.*/', '', $desc);
 

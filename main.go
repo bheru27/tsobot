@@ -97,11 +97,11 @@ func main() {
 	flag.IntVar(&port, "port", 6697, "port")
 	flag.BoolVar(&ssl, "ssl", true, "use ssl?")
 
-	flag.StringVar(&nick, "nick", "tsobot", "nick")
+	flag.StringVar(&nick, "nick", "tsobotv2", "nick")
 	flag.StringVar(&pass, "pass", "", "NickServ IDENTIFY password (optional)")
-	flag.StringVar(&join, "join", "tso", "space separated list of channels to join")
+	flag.StringVar(&join, "join", "/g/punk", "space separated list of channels to join")
 
-	flag.StringVar(&admin, "admin", "tso", "space separated list of privileged nicks")
+	flag.StringVar(&admin, "admin", "GreyMan", "space separated list of privileged nicks")
 	flag.StringVar(&cache_dir, "cache_dir", ".cache", "directory to cache datas like rss feeds")
 
 	flag.Parse()

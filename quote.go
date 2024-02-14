@@ -46,9 +46,10 @@ func addQuote(channel, arg, nick string) string {
 		return "don't quote yourself you narcissistic twat"
 	}
 
-	if src == "tso" {
-		return "tso never said that"
-	}
+	// disabling this but not removing completely
+	//if src == "tso" {
+	//	return "tso never said that"
+	//}
 
 	if len(args) > 1 {
 		quote := args[1]
