@@ -329,10 +329,27 @@ func main() {
 			sendMessage(who, "\x02\x034REE"+strings.Repeat("E", rand.Intn(10)))
 		} else if msg == "ree" {
 			sendMessage(who, "roo normans get out 🐸")
-		} else if strings.Contains(msg, ":^)") {
-			sendMessage(who, "(^:")
-		} else if strings.Contains(msg, "(^:") {
-			sendMessage(who, ":^)")
+		} else if strings.Contains(msg, ":^)") || strings.Contains(msg, "(^:") {
+			switch rand.Intn(5) {
+			case 0:
+				sendMessage(who, ":^(")
+			case 1:
+				sendMessage(who, ":^)))"+strings.Repeat(")", rand.Intn(7)))
+			case 2:
+				sendMessage(who, ". .")
+				<-time.After(time.Second)
+				sendMessage(who, "  >")
+				<-time.After(time.Second)
+				sendMessage(who, "\\_/")
+			case 3:
+				sendMessage(who, strings.Repeat(":^) (^: ", rand.Intn(3)))
+			case 4:
+				sendMessage(who, ":^|")
+				<-time.After(time.Second)
+				sendMessage(who, ">:^|")
+			case 5:
+				sendMessage(who, "c^:")
+			}
 		}
 	}
 	irc.HandleFunc(client.PRIVMSG, msgHandler)
