@@ -101,7 +101,7 @@ func main() {
 	flag.StringVar(&pass, "pass", "", "NickServ IDENTIFY password (optional)")
 	flag.StringVar(&join, "join", "/g/punk", "space separated list of channels to join")
 
-	flag.StringVar(&admin, "admin", "GreyMan", "space separated list of privileged nicks")
+	flag.StringVar(&admin, "admin", "GreyMan dvj tso", "space separated list of privileged nicks")
 	flag.StringVar(&cache_dir, "cache_dir", ".cache", "directory to cache datas like rss feeds")
 
 	flag.Parse()
@@ -198,9 +198,9 @@ func main() {
 		defer chatlogMu.Unlock()
 		chatlog, ok := chatlogs[who]
 		if !ok {
-			chatlog = make([][]string, 100, 100)
+			chatlog = make([][]string, 1000, 1000)
 		}
-		for i := 98; i >= 0; i-- {
+		for i := 998; i >= 0; i-- {
 			chatlog[i+1] = chatlog[i]
 		}
 		chatlog[0] = []string{strings.ToLower(nick), msg}
