@@ -101,7 +101,7 @@ func main() {
 	flag.StringVar(&pass, "pass", "", "NickServ IDENTIFY password (optional)")
 	flag.StringVar(&join, "join", "/g/punk", "space separated list of channels to join")
 
-	flag.StringVar(&admin, "admin", "GreyMan dvj tso", "space separated list of privileged nicks")
+	flag.StringVar(&admin, "admin", "GreyMan", "space separated list of privileged nicks")
 	flag.StringVar(&cache_dir, "cache_dir", ".cache", "directory to cache datas like rss feeds")
 
 	flag.Parse()
