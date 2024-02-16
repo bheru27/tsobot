@@ -289,15 +289,24 @@ func init() {
 
 	cnt := 0
 	botCommands["wake"] = &botCommand{false, func(who, arg, nick string) {
-		sendMessage(who, func() string {
-			cnt++
-			if cnt >= 100 {
-				cnt = 0
-				return "SAVE ME"
-			}
-			return "(can't wake up)"
-		}())
-	}}
+		if arg == "" {
+			sendMessage(who, "me up inside")
+		} else if arg == "me up inside" {
+			sendMessage(who, "(can't wake up)")
+			go func() {
+				<-time.After(time.Second * 30)
+				sendMessage(who, "call my name and save me from the dark")
+				<-time.After(time.Second * 10)
+				sendMessage(who, "bid my blood to run")
+				<-time.After(time.Second * 5)
+				sendMessage(who, "before I come undone")
+				<-time.After(time.Second)
+				sendMessage(who, bold(color("SAVE ME", Red, Black)))
+				<-time.After(time.Second * 3)
+				sendMessage(who, italic("Save me from the nothing I've become~"))
+			}()
+		}
+	}
 }
 
 func randomChoice(filename string) string {
