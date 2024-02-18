@@ -303,7 +303,7 @@ func init() {
 				<-time.After(time.Second)
 				sendMessage(who, colorString("SAVE ME", Red, Black))
 				<-time.After(time.Second * 3)
-				sendMessage(who, colorString("Save me from the nothing I've become~", Red))
+				sendMessage(who, colorString("Save me from the nothing I've become~", Red, Black))
 			}()
 		}
 	}}
