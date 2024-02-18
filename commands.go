@@ -287,8 +287,8 @@ func init() {
 
 	botCommands["cite"] = &botCommand{false, func(who, arg, nick string) { sendMessage(who, "\x1d\x0312[citation needed]") }}
 
-	cnt := 0
 	botCommands["wake"] = &botCommand{false, func(who, arg, nick string) {
+
 		if arg == "" {
 			sendMessage(who, "me up inside")
 		} else if arg == "me up inside" {
@@ -301,12 +301,12 @@ func init() {
 				<-time.After(time.Second * 5)
 				sendMessage(who, "before I come undone")
 				<-time.After(time.Second)
-				sendMessage(who, bold(color("SAVE ME", Red, Black)))
+				sendMessage(who, colorString("SAVE ME", Red, Black))
 				<-time.After(time.Second * 3)
-				sendMessage(who, italic("Save me from the nothing I've become~"))
+				sendMessage(who, colorString("Save me from the nothing I've become~", Red))
 			}()
 		}
-	}
+	}}
 }
 
 func randomChoice(filename string) string {
