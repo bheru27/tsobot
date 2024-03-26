@@ -105,7 +105,7 @@ func init() {
 	botCommands["bots"] = &botCommand{
 		false,
 		func(who, arg, nick string) {
-			sendMessage(who, "Reporting in! [ "+colorString("Go!", Cyan)+" ] https://github.com/dayvonjersen/tsobot")
+			sendMessage(who, "Reporting in! [ "+colorString("Go!", Cyan)+" ] https://github.com/bheru27/tsobot")
 		},
 	}
 	botCommands["join"] = &botCommand{
