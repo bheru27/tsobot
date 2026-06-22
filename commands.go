@@ -307,6 +307,48 @@ func init() {
 			}()
 		}
 	}}
+	botCommands["roll"] = &botCommand{false, func(who, arg, nick string) {
+		rand.Seed(time.Now().UnixNano())
+
+		var numDice, numSides int
+		fmt.Sscanf(arg, "%dd%d", &numDice, &numSides)
+		if numDice <= 0 {
+			numDice = 1
+		}
+		if numSides <= 0 {
+			numSides = 6
+		}
+		results := []string{}
+		for numDice > 0 {
+			r := rand.Intn(numSides)
+			results = append(results, strconv.Itoa(r))
+			numDice--
+		}
+		sendMessage(who, nick+" rolled "+strings.Join(results, " "))
+	}}
+	botCommands["slap"] = &botCommand{false, func(who, arg, nick string) {
+		if arg == "" {
+			sendAction(who, "slaps "+nick)
+			return
+		}
+		fish := "trout"
+		rand.Seed(time.Now().UnixNano())
+		switch rand.Intn(5) {
+		case 0:
+			fish = "fishbot"
+		case 1:
+			fish = "salmon"
+		case 2:
+			fish = "haddock"
+		case 3:
+			fish = "sardine"
+		case 4:
+			fish = "Phil Fish"
+		case 5:
+			fish = "tuna"
+		}
+		sendAction(who, "slaps "+arg+" with a large "+fish)
+	}}
 }
 
 func randomChoice(filename string) string {
