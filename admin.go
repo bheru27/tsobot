@@ -2,9 +2,13 @@ package main
 
 import (
 	"strings"
+	"sync"
 )
 
-var botAdmins map[string]struct{}
+var (
+	botAdmins   map[string]struct{}
+	botAdminsMu sync.RWMutex
+)
 
 func init() {
 	botAdmins = map[string]struct{}{}
@@ -39,14 +43,20 @@ func init() {
 }
 
 func isAdmin(nick string) bool {
+	botAdminsMu.RLock()
+	defer botAdminsMu.RUnlock()
 	_, ok := botAdmins[nick]
 	return ok
 }
 
 func addAdmin(nick string) {
+	botAdminsMu.Lock()
+	defer botAdminsMu.Unlock()
 	botAdmins[nick] = struct{}{}
 }
 
 func removeAdmin(nick string) {
+	botAdminsMu.Lock()
+	defer botAdminsMu.Unlock()
 	delete(botAdmins, nick)
 }

@@ -15,16 +15,27 @@ func sed(s, pattern, replace string, insensitive, global bool) (result string, e
 		return
 	}
 	if global {
-		for _, m := range re.FindAllStringSubmatch(s, -1) {
-			if m == nil {
-				return
-			}
-			s = strings.Replace(s, m[0], replace, 1)
-			result = s
-			for i := 0; i < len(m); i++ {
-				result = strings.Replace(result, "\\"+string(byte(48+i)), m[i], -1)
-			}
+		indices := re.FindAllStringSubmatchIndex(s, -1)
+		if indices == nil {
+			return
 		}
+		var buf strings.Builder
+		prev := 0
+		for _, loc := range indices {
+			buf.WriteString(s[prev:loc[0]])
+			rep := replace
+			for i := 0; i < len(loc)/2; i++ {
+				capture := ""
+				if loc[2*i] >= 0 {
+					capture = s[loc[2*i]:loc[2*i+1]]
+				}
+				rep = strings.ReplaceAll(rep, "\\"+string(byte(48+i)), capture)
+			}
+			buf.WriteString(rep)
+			prev = loc[1]
+		}
+		buf.WriteString(s[prev:])
+		result = buf.String()
 	} else {
 		m := re.FindStringSubmatch(s)
 		if m == nil {

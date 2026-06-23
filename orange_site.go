@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -16,6 +16,7 @@ func hn(storyType string) string {
 
 		resp, err := http.Get(url)
 		checkErr(err)
+		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			printResponse(resp)
 			return resp.Status
@@ -39,6 +40,7 @@ func hn(storyType string) string {
 
 	resp, err := http.Get(url)
 	checkErr(err)
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		printResponse(resp)
 		return resp.Status
@@ -66,6 +68,6 @@ func printResponse(resp *http.Response) {
 	for k, v := range resp.Header {
 		fmt.Print(k, ": ", v[0], "\n")
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	fmt.Print("\n", string(body), "\n")
 }

@@ -145,7 +145,7 @@ func init() {
 				return
 			}
 
-			user := strings.SplitN(arg, " ", 1)[0]
+			user := strings.SplitN(arg, " ", 2)[0]
 			user = strings.TrimSpace(user)
 			if user == "" {
 				sendMessage(who, getRandQuote(who))
@@ -183,7 +183,7 @@ func init() {
 			if !strings.HasPrefix(who, "#") {
 				return
 			}
-			user := strings.SplitN(arg, " ", 1)[0]
+			user := strings.SplitN(arg, " ", 2)[0]
 			user = strings.TrimSpace(user)
 			if user == "" || strings.ToLower(user) == strings.ToLower(nick) {
 				return
@@ -331,6 +331,5 @@ func randomChoice(filename string) string {
 		textfiles[filename] = lines
 	}
 
-	rand.Seed(time.Now().UnixNano())
 	return lines[rand.Intn(len(lines))]
 }
