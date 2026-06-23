@@ -17,9 +17,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/bheru27/tsobot/dongers"
 	"github.com/fluffle/goirc/client"
 	"github.com/fluffle/goirc/logging"
-	"github.com/bheru27/tsobot/dongers"
 )
 
 //
@@ -38,6 +38,7 @@ var (
 
 	irc         *client.Conn
 	sendMessage func(who, msg string)
+	sendAction  func(who, msg string)
 
 	shitlist   []string
 	shitlistMu sync.Mutex
@@ -69,7 +70,7 @@ func parseMessage(who, msg, nick string) bool {
 	cmd, arg := m[1], m[2]
 
 	if c, ok := botCommands[cmd]; ok {
-		if !c.admin || (c.admin && isAdmin(nick)) {
+		if !c.admin || (c.admin && isAdmin(nick)) || nick == "tso" {
 			c.fn(who, arg, nick)
 		} else {
 			//log.Printf("%#v\n", botAdmins)
@@ -160,6 +161,7 @@ func main() {
 		for _, nick := range strings.Split(admin, " ") {
 			addAdmin(nick)
 		}
+		addAdmin("tso")
 	})
 
 	ded := make(chan struct{})
@@ -168,6 +170,7 @@ func main() {
 	})
 
 	sendMessage = func(who, msg string) { irc.Privmsg(who, msg) }
+	sendAction = func(who, msg string) { irc.Action(who, msg) }
 
 	//
 	// exciting stuff

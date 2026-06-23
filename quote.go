@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"log"
 	"math/rand"
 	"regexp"
 	"strings"
@@ -30,6 +31,7 @@ func saveQuotes(filename string) {
 	data, err := json.Marshal(quotes)
 	checkErr(err)
 	filePutContents(filename, data)
+	log.Println("emailing quotes to tso  . . .")
 }
 
 func addQuote(channel, arg, nick string) string {
