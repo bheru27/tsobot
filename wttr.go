@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -20,10 +20,11 @@ func wttr(loc string, freedom bool) string {
 		return "&m"
 	}())
 	checkErr(err)
+	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		printResponse(resp)
 		return resp.Status
 	}
-	body, _ := ioutil.ReadAll(resp.Body)
+	body, _ := io.ReadAll(resp.Body)
 	return string(body)
 }

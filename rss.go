@@ -42,6 +42,7 @@ func lobsters() string {
 	if time.Since(rssLastFetch) > time.Hour {
 		resp, err := http.Get("https://lobste.rs/rss")
 		checkErr(err)
+		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			printResponse(resp)
 			return resp.Status
@@ -51,6 +52,9 @@ func lobsters() string {
 		checkErr(xml.NewDecoder(resp.Body).Decode(&lobstersCache))
 	}
 
+	if len(lobstersCache.Items) == 0 {
+		return "(no items)"
+	}
 	return lobstersCache.Items[rand.Intn(len(lobstersCache.Items))].Link
 }
 
@@ -77,6 +81,7 @@ func ngate() (string, bool) {
 	if time.Since(ngateLastFetch) > time.Hour {
 		resp, err := http.Get("http://n-gate.com/index.rss")
 		checkErr(err)
+		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			printResponse(resp)
 			return resp.Status, false
@@ -141,5 +146,8 @@ func ngate() (string, bool) {
 		}
 	}
 
+	if len(ngateQuotes) == 0 {
+		return "(no quotes)", fresh
+	}
 	return ngateQuotes[rand.Intn(len(ngateQuotes))], fresh
 }

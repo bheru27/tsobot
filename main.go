@@ -14,6 +14,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/bheru27/tsobot/dongers"
@@ -109,7 +110,7 @@ func main() {
 
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt)
-	signal.Notify(sig, os.Kill)
+	signal.Notify(sig, syscall.SIGTERM)
 	go func() {
 		<-sig
 		log.Println("we get signal")
@@ -212,7 +213,7 @@ func main() {
 	botCommands["mock"] = &botCommand{
 		false,
 		func(who, arg, nick string) {
-			user := strings.SplitN(arg, " ", 1)[0]
+			user := strings.SplitN(arg, " ", 2)[0]
 			user = strings.TrimSpace(user)
 
 			if !strings.HasPrefix(who, "#") || user == "" {
@@ -328,28 +329,31 @@ func main() {
 		logMessage(who, msg, l.Nick)
 		msg = strings.ToLower(msg)
 		if strings.Contains(msg, "normie") || strings.Contains(msg, "normalfag") || strings.Contains(msg, "normans") {
-			rand.Seed(time.Now().UnixNano())
 			sendMessage(who, "\x02\x034REE"+strings.Repeat("E", rand.Intn(10)))
 		} else if msg == "ree" {
 			sendMessage(who, "roo normans get out 🐸")
 		} else if strings.Contains(msg, ":^)") || strings.Contains(msg, "(^:") {
-			switch rand.Intn(5) {
+			switch rand.Intn(6) {
 			case 0:
 				sendMessage(who, ":^(")
 			case 1:
 				sendMessage(who, ":^)))"+strings.Repeat(")", rand.Intn(7)))
 			case 2:
-				sendMessage(who, ". .")
-				<-time.After(time.Second)
-				sendMessage(who, "  >")
-				<-time.After(time.Second)
-				sendMessage(who, "͜")
+				go func() {
+					sendMessage(who, ". .")
+					<-time.After(time.Second)
+					sendMessage(who, "  >")
+					<-time.After(time.Second)
+					sendMessage(who, "\\_/")
+				}()
 			case 3:
 				sendMessage(who, strings.Repeat(":^) (^: ", rand.Intn(3)))
 			case 4:
-				sendMessage(who, ":^|")
-				<-time.After(time.Second)
-				sendMessage(who, ">:^|")
+				go func() {
+					sendMessage(who, ":^|")
+					<-time.After(time.Second)
+					sendMessage(who, ">:^|")
+				}()
 			case 5:
 				sendMessage(who, "c^:")
 			}
