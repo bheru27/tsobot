@@ -18,6 +18,8 @@ func EscapeShellString(str string) string {
 func translate(text string) string {
 	cmd := exec.Command("sh", "-c", "trans -brief "+EscapeShellString(text))
 	b, err := cmd.Output()
-	checkErr(err)
+	if err != nil {
+		return err.Error()
+	}
 	return string(b)
 }

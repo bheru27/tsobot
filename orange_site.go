@@ -15,14 +15,18 @@ func hn(storyType string) string {
 		url := "https://hacker-news.firebaseio.com/v0/" + storyType + "stories.json"
 
 		resp, err := http.Get(url)
-		checkErr(err)
+		if err != nil {
+			return err.Error()
+		}
 		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			printResponse(resp)
 			return resp.Status
 		}
 
-		checkErr(json.NewDecoder(resp.Body).Decode(&items))
+		if err := json.NewDecoder(resp.Body).Decode(&items); err != nil {
+			return err.Error()
+		}
 	}
 
 	item := 0
@@ -39,7 +43,9 @@ func hn(storyType string) string {
 	url := "https://hacker-news.firebaseio.com/v0/item/" + strconv.Itoa(item) + ".json"
 
 	resp, err := http.Get(url)
-	checkErr(err)
+	if err != nil {
+		return err.Error()
+	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		printResponse(resp)
@@ -51,7 +57,9 @@ func hn(storyType string) string {
 		Title string `json:"title"`
 		Url   string `json:"url"`
 	}
-	checkErr(json.NewDecoder(resp.Body).Decode(&story))
+	if err := json.NewDecoder(resp.Body).Decode(&story); err != nil {
+		return err.Error()
+	}
 
 	ret := story.Title
 	if story.Url != "" {

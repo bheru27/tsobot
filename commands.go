@@ -373,5 +373,8 @@ func randomChoice(filename string) string {
 		textfiles[filename] = lines
 	}
 
+	if len(lines) == 0 {
+		return "(empty)"
+	}
 	return lines[rand.Intn(len(lines))]
 }

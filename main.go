@@ -259,7 +259,8 @@ func main() {
 				chatlogMu.Unlock()
 				return
 			}
-			chat := chatlog[:]
+			chat := make([][]string, len(chatlog))
+			copy(chat, chatlog)
 			chatlogMu.Unlock()
 
 			for _, ln := range chat {
@@ -384,13 +385,8 @@ func checkErr(err error) {
 }
 
 func fileExists(filename string) bool {
-	f, err := os.Open(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	checkErr(f.Close())
-	checkErr(err)
-	return true
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
 }
 
 func fileGetContents(filename string) []byte {
@@ -406,11 +402,14 @@ func fileGetContents(filename string) []byte {
 }
 
 func filePutContents(filename string, contents []byte) {
-	f, err := os.Create(filename)
+	tmp := filename + ".tmp"
+	f, err := os.Create(tmp)
 	checkErr(err)
 	_, err = f.Write(contents)
 	checkErr(err)
 	checkErr(f.Close())
+	os.Rename(filename, filename+".bak") // best-effort backup before replacing
+	checkErr(os.Rename(tmp, filename))
 }
 
 // goirc logging...

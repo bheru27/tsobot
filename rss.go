@@ -41,7 +41,9 @@ func lobsters() string {
 	defer rssLastFetchMu.Unlock()
 	if time.Since(rssLastFetch) > time.Hour {
 		resp, err := http.Get("https://lobste.rs/rss")
-		checkErr(err)
+		if err != nil {
+			return err.Error()
+		}
 		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			printResponse(resp)
@@ -49,7 +51,9 @@ func lobsters() string {
 		}
 		rssLastFetch = time.Now()
 
-		checkErr(xml.NewDecoder(resp.Body).Decode(&lobstersCache))
+		if err := xml.NewDecoder(resp.Body).Decode(&lobstersCache); err != nil {
+			return err.Error()
+		}
 	}
 
 	if len(lobstersCache.Items) == 0 {
@@ -80,7 +84,9 @@ func ngate() (string, bool) {
 	fresh := false
 	if time.Since(ngateLastFetch) > time.Hour {
 		resp, err := http.Get("http://n-gate.com/index.rss")
-		checkErr(err)
+		if err != nil {
+			return err.Error(), false
+		}
 		defer resp.Body.Close()
 		if resp.StatusCode != 200 {
 			printResponse(resp)
@@ -88,11 +94,15 @@ func ngate() (string, bool) {
 		}
 		ngateLastFetch = time.Now()
 
-		checkErr(xml.NewDecoder(resp.Body).Decode(&ngateCache))
+		if err := xml.NewDecoder(resp.Body).Decode(&ngateCache); err != nil {
+			return err.Error(), false
+		}
 
 		for _, item := range ngateCache.Items {
 			pubDate, err := time.Parse("Mon, _2 Jan 2006 15:04:05 MST", item.PubDate)
-			checkErr(err)
+			if err != nil {
+				continue
+			}
 
 			if ngateLastPubDate.Before(pubDate) {
 				ngateLastPubDate = pubDate

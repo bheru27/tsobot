@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"sort"
 	"sync"
 )
@@ -59,16 +60,32 @@ func newScoreboard(filename string) *Scoreboard {
 		lookup:   map[string]*Score{},
 		mu:       &sync.Mutex{},
 	}
-	var scores []*Score
-	if fileExists(filename) {
-		data := fileGetContents(filename)
-		checkErr(json.Unmarshal(data, &sb))
+	scores := []*Score{}
+	loaded := false
+	for _, f := range []string{filename, filename + ".bak"} {
+		if !fileExists(f) {
+			continue
+		}
+		data := fileGetContents(f)
+		if len(data) == 0 {
+			continue
+		}
+		if err := json.Unmarshal(data, &sb); err != nil {
+			log.Printf("warning: could not parse %s: %v", f, err)
+			continue
+		}
+		if f != filename {
+			log.Printf("warning: loaded scoreboard from backup %s", f)
+		}
 		scores = sb.Scores
 		for _, s := range sb.Scores {
 			sb.lookup[s.Nick] = s
 		}
-	} else {
-		scores = []*Score{}
+		loaded = true
+		break
+	}
+	if !loaded && (fileExists(filename) || fileExists(filename+".bak")) {
+		log.Printf("warning: scoreboard files found but could not be read, starting fresh")
 	}
 	sb.Scores = sortableScores(scores)
 	return sb

@@ -19,9 +19,22 @@ var (
 func loadQuotes(filename string) {
 	quotesMu.Lock()
 	defer quotesMu.Unlock()
-	if fileExists(filename) {
-		data := fileGetContents(filename)
-		checkErr(json.Unmarshal(data, &quotes))
+	for _, f := range []string{filename, filename + ".bak"} {
+		if !fileExists(f) {
+			continue
+		}
+		data := fileGetContents(f)
+		if len(data) == 0 {
+			continue
+		}
+		if err := json.Unmarshal(data, &quotes); err != nil {
+			log.Printf("warning: could not parse %s: %v", f, err)
+			continue
+		}
+		if f != filename {
+			log.Printf("warning: loaded quotes from backup %s", f)
+		}
+		return
 	}
 }
 
@@ -121,7 +134,7 @@ func getQuote(channel, src string) string {
 	quotesMu.Lock()
 	defer quotesMu.Unlock()
 	if _, ok := quotes[channel]; ok {
-		if q, ok := quotes[channel][src]; ok {
+		if q, ok := quotes[channel][src]; ok && len(q) > 0 {
 			return "<" + src + "> " + q[rand.Intn(len(q))]
 		}
 	}
@@ -132,7 +145,7 @@ func getQuote(channel, src string) string {
 func getRandQuote(channel string) string {
 	quotesMu.Lock()
 	defer quotesMu.Unlock()
-	if _, ok := quotes[channel]; ok {
+	if _, ok := quotes[channel]; ok && len(quotes[channel]) > 0 {
 		i := 0
 		r := rand.Intn(len(quotes[channel]))
 		for src, q := range quotes[channel] {

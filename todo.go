@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"sync"
 )
@@ -15,9 +16,22 @@ var (
 func loadTodo(filename string) {
 	todoListMu.Lock()
 	defer todoListMu.Unlock()
-	if fileExists(filename) {
-		data := fileGetContents(filename)
-		checkErr(json.Unmarshal(data, &todoList))
+	for _, f := range []string{filename, filename + ".bak"} {
+		if !fileExists(f) {
+			continue
+		}
+		data := fileGetContents(f)
+		if len(data) == 0 {
+			continue
+		}
+		if err := json.Unmarshal(data, &todoList); err != nil {
+			log.Printf("warning: could not parse %s: %v", f, err)
+			continue
+		}
+		if f != filename {
+			log.Printf("warning: loaded todo from backup %s", f)
+		}
+		return
 	}
 }
 

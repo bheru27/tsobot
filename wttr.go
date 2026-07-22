@@ -19,7 +19,9 @@ func wttr(loc string, freedom bool) string {
 		}
 		return "&m"
 	}())
-	checkErr(err)
+	if err != nil {
+		return err.Error()
+	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
 		printResponse(resp)
