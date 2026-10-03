@@ -15,7 +15,7 @@ func wttr(loc string, freedom bool) string {
 	}
 	resp, err := http.Get("http://wttr.in/" + loc + "?format=2" + func() string {
 		if freedom {
-			return ""
+			return "&u"
 		}
 		return "&m"
 	}())
