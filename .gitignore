@@ -9,3 +9,6 @@ scoreboard.json
 *.json
 rss.txt
 index.rss
+*.bak
+raw
+quotes-1-6-2025
