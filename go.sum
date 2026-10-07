@@ -1,5 +1,3 @@
-github.com/bheru27/tsobot v0.0.0-20240214001405-1e2a8e11a5af h1:jKoVhh4AGLB9l5oAuMX61XdGeVT7Wtj5vtHAUQstOzo=
-github.com/bheru27/tsobot v0.0.0-20240214001405-1e2a8e11a5af/go.mod h1:KjHzlrX+D8PM3FRo1fKnHO2CGbXFtXypgC8IW2ctDP4=
 github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead h1:fI1Jck0vUrXT8bnphprS1EoVRe2Q5CKCX8iDlpqjQ/Y=
 github.com/emersion/go-sasl v0.0.0-20220912192320-0145f2c60ead/go.mod h1:iL2twTeMvZnrg54ZoPDNfJaJaqy0xIQFuBdrLsmspwQ=
 github.com/fluffle/goirc v1.3.1 h1:6ow9Gkoil+5xv16bbyurKL68h+ushWFiAcV5BeiN+pA=
